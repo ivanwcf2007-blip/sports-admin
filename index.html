@@ -8,7 +8,6 @@
         :root { --blue: #1e3a8a; --light-blue: #3b82f6; }
         body { 
             font-family: 'PingFang HK', sans-serif; margin: 0; background-color: #f8fafc; height: 100vh; display: flex; flex-direction: column; 
-            /* 直接嵌入老師提供的校徽 SVG */
             background-image: linear-gradient(rgba(248,250,252,0.92), rgba(248,250,252,0.92)), url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNDAwIj48ZyBvcGFjaXR5PSIwLjA4Ij48cGF0aCBkPSJNMjAwIDQwIEwzNDAgMTIwIEwzNDAgMjgwIEwyMDAgMzYwIEw2MCAyODAgTDYwIDEyMCBaIiBmaWxsPSJub25lIiBzdHJva2U9IiMxZTMhOGEiIHN0cm9rZS13aWR0aD0iNCIvPjx0ZXh0IHg9IjIwMCIgeT0iMjEwIiBmb250LXNpemU9IjMwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMWUzYThhIj5MTVNDQ1BTPC90ZXh0PjwvZz48L3N2Zz4=");
             background-repeat: no-repeat; background-position: center; background-size: 500px;
         }
@@ -23,9 +22,10 @@
         table { width: 100%; border-collapse: collapse; background: white; margin-top: 15px; }
         th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
         th { background: #f8fafc; }
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; margin-right: 10px; }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; margin-right: 10px; margin-bottom: 5px; }
         .btn-save { background: #2563eb; color: white; }
         .btn-mgr { background: #10b981; color: white; }
+        .btn-excel { background: #ea580c; color: white; }
         textarea { width: 100%; height: 150px; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e0; font-family: monospace; }
         #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; justify-content:center; align-items:center; flex-direction:column; }
         .date-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 20px; }
@@ -34,7 +34,7 @@
 </head>
 <body>
 
-<div id="loader">⚙️ 正在同步雲端資料...</div>
+<div id="loader">⚙️ 正在處理雲端數據...</div>
 <div class="header">梨木樹天主教小學 - 校隊管理系統</div>
 
 <div class="wrapper">
@@ -47,21 +47,16 @@
 </div>
 
 <script>
-    // ⚠️ 請確保這裡填入正確的 API URL
+    // ⚠️ 請確保填入正確的 API URL
     const API_URL = "https://script.google.com/macros/s/AKfycbw0sxj4vS5PiEe-TE2SFMXxI1Q2pcL9diVW1q6_fm6qPGL-AKR-gmpGaGD4BbMbm7hu/exec"; 
 
     let teams = [];
     let cloudAtt = [];
 
-    // 自動解析格式：支援 2A 4 陳梓傑 或 2A,4,陳梓傑
     function parseMemberLine(line) {
         const cleanLine = line.trim().replace(/,/g, ' ').replace(/\s+/g, ' ');
         const parts = cleanLine.split(' ');
-        return {
-            class: parts[0] || '?',
-            no: parts[1] || '?',
-            name: parts[2] || '?'
-        };
+        return { class: parts[0] || '?', no: parts[1] || '?', name: parts[2] || '?' };
     }
 
     async function init() {
@@ -84,85 +79,4 @@
             const div = document.createElement('div');
             div.className = 'nav-item';
             div.innerText = "🏐 " + t.name;
-            div.onclick = () => renderDates(i);
-            menu.appendChild(div);
-        });
-    }
-
-    function showManager() {
-        document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
-        document.getElementById('menu-mgr').classList.add('active');
-        let html = `<div class="card">
-            <h3>校隊設定中心</h3>
-            <p>請輸入隊員資料，每行一位。支援格式：<b>班別 學號 姓名</b> (例如：6A 10 郭嘉烯)</p>
-            <button class="btn btn-mgr" onclick="addTeam()">+ 新增校隊</button>
-            <button class="btn btn-save" onclick="saveConfig()">💾 儲存所有設定到雲端</button>
-        </div>`;
-        
-        teams.forEach((t, i) => {
-            html += `<div class="card">
-                <input type="text" value="${t.name}" onchange="teams[${i}].name=this.value" style="font-size:18px; font-weight:bold; padding:5px;">
-                <button onclick="teams.splice(${i},1);showManager()" style="color:red; cursor:pointer; background:none; border:none; margin-left:10px;">[刪除隊伍]</button>
-                <div style="margin:10px 0;">練習日(0-6): <input type="text" value="${t.days.join(',')}" onchange="teams[${i}].days=this.value.split(',').map(Number)"></div>
-                <textarea onchange="updateMembers(${i}, this.value)">${t.members.map(m => `${m.class} ${m.no} ${m.name}`).join('\n')}</textarea>
-            </div>`;
-        });
-        document.getElementById('display-area').innerHTML = html;
-    }
-
-    function updateMembers(idx, val) {
-        teams[idx].members = val.split('\n').filter(l => l.trim()).map(parseMemberLine);
-    }
-
-    function addTeam() { teams.push({name: "新校隊", days: [3], members: []}); showManager(); }
-
-    async function saveConfig() {
-        showLoader(true);
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ type: "CONFIG", teams: teams }) });
-        alert("設定儲存成功！");
-        init();
-    }
-
-    function renderDates(idx) {
-        const t = teams[idx];
-        let html = `<h2>${t.name} - 點名日期</h2><div class="date-grid">`;
-        let curr = new Date('2026-04-01');
-        while(curr <= new Date('2026-06-30')) {
-            if(t.days.includes(curr.getDay())) {
-                const d = curr.toISOString().split('T')[0];
-                html += `<div class="date-btn" onclick="renderRoll(${idx},'${d}')">${d.substring(5)}</div>`;
-            }
-            curr.setDate(curr.getDate()+1);
-        }
-        document.getElementById('display-area').innerHTML = html + "</div>";
-    }
-
-    function renderRoll(idx, date) {
-        const t = teams[idx];
-        const record = cloudAtt.find(r => r.teamName === t.name && r.date === date);
-        const att = record ? record.attendance : {};
-        let html = `<h3>${t.name} (${date})</h3><button class="btn btn-save" onclick="saveAtt(${idx},'${date}')">確認並儲存點名</button>`;
-        html += `<table><tr><th>班別</th><th>學號</th><th>姓名</th><th>狀態</th></tr>`;
-        t.members.forEach(m => {
-            const s = att[m.name] || "出席";
-            html += `<tr><td>${m.class}</td><td>${m.no}</td><td>${m.name}</td><td>
-                <select id="s-${m.name}"><option ${s=='出席'?'selected':''}>出席</option><option ${s=='請假'?'selected':''}>請假</option><option ${s=='遲到'?'selected':''}>遲到</option><option ${s=='缺席'?'selected':''}>缺席</option></select>
-            </td></tr>`;
-        });
-        document.getElementById('display-area').innerHTML = html + "</table>";
-    }
-
-    async function saveAtt(idx, date) {
-        const t = teams[idx]; const att = {};
-        t.members.forEach(m => att[m.name] = document.getElementById('s-'+m.name).value);
-        showLoader(true);
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ teamName: t.name, date: date, attendance: att }) });
-        alert("點名資料已同步！");
-        init();
-    }
-
-    function showLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
-    window.onload = init;
-</script>
-</body>
-</html>
+            div.onclick = () => renderDates(i
