@@ -3,178 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>梨木樹天主教小學 - 校隊管理系統</title>
+    <title>梨木樹天主教小學 - 雲端同步版</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root { --blue: #1e3a8a; --light-blue: #3b82f6; }
         body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f8fafc; }
-        .header { background: var(--blue); color: white; padding: 15px; text-align: center; font-weight: bold; }
+        .header { background: var(--blue); color: white; padding: 15px; text-align: center; }
         .wrapper { display: flex; flex: 1; overflow: hidden; }
-        .sidebar { width: 240px; background: white; border-right: 1px solid #ddd; overflow-y: auto; }
-        .main-content { flex: 1; padding: 20px; overflow-y: auto; background: white; }
-        .nav-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; color: #333; }
-        .nav-item:hover { background: #f0f7ff; }
-        .active { background: var(--light-blue) !important; color: white !important; }
+        .sidebar { width: 220px; background: white; border-right: 1px solid #ddd; overflow-y: auto; }
+        .main { flex: 1; padding: 20px; overflow-y: auto; }
+        .nav-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .active { background: var(--light-blue) !important; color: white; }
         .date-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 15px; }
-        .date-btn { border: 1px solid var(--light-blue); padding: 12px; border-radius: 5px; text-align: center; cursor: pointer; color: var(--blue); font-weight: bold; }
-        .date-btn:hover { background: #eff6ff; }
+        .date-btn { border: 1px solid var(--light-blue); padding: 12px; border-radius: 5px; text-align: center; cursor: pointer; font-weight: bold; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #f8f9fa; }
-        .btn { padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+        .btn { padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; margin: 5px 0; }
         .btn-save { background: #16a34a; color: white; }
-        .btn-excel { background: #ea580c; color: white; margin-left: 10px; }
-        .btn-back { background: #64748b; color: white; }
-        select { padding: 5px; width: 100%; font-size: 16px; }
-        .search-area { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .loading-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
 
-<div class="header">梨木樹天主教小學 - 校隊管理系統</div>
+<div id="loader" class="loading-overlay">雲端同步中...</div>
+<div class="header">梨木樹天主教小學 - 雲端校隊管理</div>
 
 <div class="wrapper">
     <div class="sidebar">
-        <div class="nav-item active" id="btn-home" onclick="window.location.reload()">系統首頁 / 搜尋</div>
-        <div style="background:#eee; padding:10px; font-size:12px; font-weight:bold;">校隊列表</div>
+        <div class="nav-item active" onclick="location.reload()">重新整理/搜尋</div>
         <div id="team-menu"></div>
     </div>
-    
-    <div class="main-content" id="display-area">
-        <div class="search-area">
-            <h3>學生跨隊搜尋</h3>
-            <input type="text" id="search-input" style="padding:10px; width:200px;" placeholder="輸入學生姓名">
-            <button class="btn btn-save" onclick="searchStudent()">搜尋</button>
-            <div id="search-result" style="margin-top:10px;"></div>
-        </div>
-        <hr>
-        <p>請點擊左側校隊開始點名。</p>
+    <div class="main" id="display-area">
+        <h3>學生搜尋</h3>
+        <input type="text" id="s-input" placeholder="學生姓名">
+        <button onclick="doSearch()">搜尋</button>
+        <div id="s-res"></div>
     </div>
 </div>
 
 <script>
+    // 【請在此處替換】
+    const API_URL = "https://script.google.com/macros/s/AKfycbynJfvMRxHd0ojBDkfJn7USwWRTGhteTDkhC1sISlVK8u3z5HaeN3jGSrQbF1xMFGds/exec";
+
     const teamData = [
         { name: "閃避球隊", days: [3, 4], members: ["郭嘉烯", "張雨霏", "何雨馨", "白淽錤", "戴卓琦", "朱晉衡", "張璟釩", "吳穎禧", "王詩琪", "王詩詩", "陳樂兒", "吳浩添"] },
-        { name: "田徑隊", days: [3], members: ["學生A", "學生B"] },
-        { name: "男子排球隊", days: [3, 5], members: ["學生C", "學生D"] },
-        { name: "女子排球隊", days: [1, 4], members: ["學生E", "學生F"] },
-        { name: "足球隊", days: [5, 6], members: ["學生G", "學生H"] },
-        { name: "籃球隊", days: [1, 5], members: ["學生I", "學生J"] },
-        { name: "乒乓球隊", days: [1, 2, 3, 4, 5], members: ["學生K", "學生L"] },
-        { name: "長跑隊", days: [1, 5], members: ["學生M", "學生N"] },
-        { name: "欖球隊", days: [4], members: ["學生O", "學生P"] }
+        { name: "田徑隊", days: [3], members: ["學生A", "學生B"] }
+        // ... 其他隊伍比照前一版本貼入
     ];
+
+    let cloudData = [];
+
+    // 從雲端抓資料
+    async function fetchCloud() {
+        document.getElementById('loader').style.display = 'flex';
+        try {
+            const resp = await fetch(API_URL);
+            cloudData = await resp.json();
+            console.log("Cloud data loaded", cloudData);
+        } catch (e) { alert("讀取雲端失敗"); }
+        document.getElementById('loader').style.display = 'none';
+    }
 
     // 初始化選單
     const menu = document.getElementById('team-menu');
-    for (let i = 0; i < teamData.length; i++) {
+    teamData.forEach((t, i) => {
         const div = document.createElement('div');
         div.className = 'nav-item';
-        div.innerText = teamData[i].name;
-        div.onclick = function() {
-            const items = document.getElementsByClassName('nav-item');
-            for(let j=0; j<items.length; j++) items[j].classList.remove('active');
-            this.classList.add('active');
-            renderDates(i);
-        };
+        div.innerText = t.name;
+        div.onclick = () => renderDates(i);
         menu.appendChild(div);
-    }
+    });
 
-    // 搜尋功能
-    function searchStudent() {
-        const name = document.getElementById('search-input').value.trim();
-        const res = document.getElementById('search-result');
-        if (!name) return;
-        let found = [];
-        for (let i = 0; i < teamData.length; i++) {
-            if (teamData[i].members.indexOf(name) !== -1) found.push(teamData[i].name);
-        }
-        if (found.length === 0) res.innerHTML = "找不到該學生";
-        else res.innerHTML = "找到學生參加：<b>" + found.join(", ") + "</b>";
-    }
-
-    // 顯示日期列表
     function renderDates(idx) {
         const team = teamData[idx];
-        let html = "<h3>" + team.name + " - 選擇日期</h3>";
-        html += "<button class='btn btn-excel' onclick='exportFullReport("+idx+")'>匯出全期總表</button>";
-        html += "<div class='date-grid'>";
-        
+        let html = `<h3>${team.name}</h3><div class="date-grid">`;
         let curr = new Date('2026-04-01');
-        const end = new Date('2026-06-30');
-        while (curr <= end) {
-            if (team.days.indexOf(curr.getDay()) !== -1) {
+        while(curr <= new Date('2026-06-30')) {
+            if(team.days.includes(curr.getDay())) {
                 const d = curr.toISOString().split('T')[0];
-                html += "<div class='date-btn' onclick='renderRollCall("+idx+", \""+d+"\")'>"+d.substring(5)+"</div>";
+                html += `<div class="date-btn" onclick="renderRoll(${idx},'${d}')">${d.substring(5)}</div>`;
             }
-            curr.setDate(curr.getDate() + 1);
+            curr.setDate(curr.getDate()+1);
         }
         document.getElementById('display-area').innerHTML = html + "</div>";
     }
 
-    // 顯示點名表
-    function renderRollCall(idx, date) {
+    function renderRoll(idx, date) {
         const team = teamData[idx];
-        const saved = JSON.parse(localStorage.getItem(team.name + "_" + date) || "{}");
-        let html = "<h3>" + team.name + " (" + date + ")</h3>";
-        html += "<button class='btn btn-back' onclick='renderDates("+idx+")'>返回日期</button>";
-        html += "<button class='btn btn-save' onclick='saveAttendance("+idx+", \""+date+"\")'>儲存點名</button>";
-        html += "<table><thead><tr><th>姓名</th><th>狀態</th></tr></thead><tbody>";
+        // 尋找雲端是否有該日期的點名紀錄
+        const record = cloudData.find(r => r.teamName === team.name && r.date === date);
+        const att = record ? record.attendance : {};
+
+        let html = `<h3>${team.name} (${date})</h3>`;
+        html += `<button class="btn btn-save" onclick="saveToCloud(${idx},'${date}')">上傳至雲端同步</button>`;
+        html += `<table><tr><th>姓名</th><th>狀態</th></tr>`;
+        team.members.forEach(m => {
+            const s = att[m] || "出席";
+            html += `<tr><td>${m}</td><td><select id="sel-${m}">
+                <option ${s=='出席'?'selected':''}>出席</option>
+                <option ${s=='請假'?'selected':''}>請假</option>
+                <option ${s=='遲到'?'selected':''}>遲到</option>
+                <option ${s=='缺席'?'selected':''}>缺席</option>
+            </select></td></tr>`;
+        });
+        document.getElementById('display-area').innerHTML = html + "</table>";
+    }
+
+    async function saveToCloud(idx, date) {
+        const team = teamData[idx];
+        const att = {};
+        team.members.forEach(m => att[m] = document.getElementById('sel-'+m).value);
         
-        for (let i = 0; i < team.members.length; i++) {
-            const m = team.members[i];
-            const s = saved[m] || "出席";
-            html += "<tr><td>"+m+"</td><td><select id='sel-"+m+"'>";
-            const opts = ["出席", "遲到", "缺席", "請假"];
-            for(let k=0; k<opts.length; k++){
-                const sel = (s === opts[k]) ? "selected" : "";
-                html += "<option value='"+opts[k]+"' "+sel+">"+opts[k]+"</option>";
-            }
-            html += "</select></td></tr>";
-        }
-        document.getElementById('display-area').innerHTML = html + "</tbody></table>";
+        document.getElementById('loader').style.display = 'flex';
+        await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ teamName: team.name, date: date, attendance: att })
+        });
+        await fetchCloud(); // 重新整理
+        alert("上傳成功！所有裝置已同步。");
+        renderDates(idx);
     }
 
-    function saveAttendance(idx, date) {
-        const team = teamData[idx];
-        let data = {};
-        for (let i = 0; i < team.members.length; i++) {
-            const m = team.members[i];
-            data[m] = document.getElementById('sel-' + m).value;
-        }
-        localStorage.setItem(team.name + "_" + date, JSON.stringify(data));
-        alert("儲存成功！");
-    }
-
-    function exportFullReport(idx) {
-        const team = teamData[idx];
-        let csv = "\uFEFF姓名";
-        let dates = [];
-        let curr = new Date('2026-04-01');
-        while (curr <= new Date('2026-06-30')) {
-            if (team.days.indexOf(curr.getDay()) !== -1) {
-                const d = curr.toISOString().split('T')[0];
-                dates.push(d);
-                csv += "," + d;
-            }
-            curr.setDate(curr.getDate() + 1);
-        }
-        csv += "\n";
-        for (let i = 0; i < team.members.length; i++) {
-            const m = team.members[i];
-            csv += m;
-            for (let j = 0; j < dates.length; j++) {
-                const saved = JSON.parse(localStorage.getItem(team.name + "_" + dates[j]) || "{}");
-                csv += "," + (saved[m] || "-");
-            }
-            csv += "\n";
-        }
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = team.name + "_全期報表.csv";
-        a.click();
-    }
+    window.onload = fetchCloud;
 </script>
 </body>
 </html>
