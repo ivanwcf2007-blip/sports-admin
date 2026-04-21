@@ -6,156 +6,33 @@
     <title>梨木樹天主教小學 - 校隊管理系統</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #1e3a8a; --accent: #3b82f6; --bg: #f8fafc; }
+        :root { --primary: #1e3a8a; --accent: #3b82f6; --bg: #f8fafc; --success: #22c55e; }
         * { box-sizing: border-box; }
-        
         body { 
             font-family: "PingFang HK", "Microsoft JhengHei", sans-serif; 
             margin: 0; display: flex; height: 100vh; background-color: var(--bg);
-            /* 加入校徽背景浮水印 */
             background-image: url('https://www.lmsccps.edu.hk/it-school/php/webcms/files/upload/logo/logo.png');
-            background-repeat: no-repeat;
-            background-position: center;
-            background-attachment: fixed;
-            background-size: 300px;
-            background-color: rgba(248, 250, 252, 0.92);
-            background-blend-mode: overlay;
+            background-repeat: no-repeat; background-position: center; background-attachment: fixed;
+            background-size: 300px; background-color: rgba(248, 250, 252, 0.94); background-blend-mode: overlay;
         }
-
-        /* 側邊欄 */
-        .sidebar { width: 260px; background: var(--primary); color: white; display: flex; flex-direction: column; z-index: 10; }
+        .sidebar { width: 260px; background: var(--primary); color: white; display: flex; flex-direction: column; z-index: 10; flex-shrink: 0; }
         .sidebar-header { padding: 20px; text-align: center; background: #172554; }
         .sidebar-menu { flex: 1; overflow-y: auto; padding: 10px; }
-        .nav-item { padding: 12px 15px; cursor: pointer; margin-bottom: 5px; border-radius: 8px; display: flex; align-items: center; transition: 0.2s; }
-        .nav-item:hover, .nav-item.active { background: var(--accent); }
+        .nav-item { padding: 12px 15px; cursor: pointer; margin-bottom: 5px; border-radius: 8px; display: flex; align-items: center; transition: 0.2s; color: #cbd5e1; text-decoration: none; }
+        .nav-item i { width: 25px; }
+        .nav-item:hover, .nav-item.active { background: var(--accent); color: white; }
         .nav-group { font-size: 0.75rem; color: #94a3b8; padding: 15px 15px 5px; text-transform: uppercase; }
-
-        /* 主內容 */
-        .main-content { flex: 1; padding: 25px; overflow-y: auto; position: relative; }
-        .card { background: rgba(255, 255, 255, 0.9); padding: 25px; border-radius: 15px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); backdrop-filter: blur(5px); }
-        
-        /* 搜尋功能樣式 */
+        .main-content { flex: 1; padding: 25px; overflow-y: auto; }
+        .card { background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 15px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); backdrop-filter: blur(5px); }
         .search-box { margin-bottom: 20px; display: flex; gap: 10px; }
         .search-input { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; }
         .search-btn { background: var(--primary); color: white; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; }
-
-        /* 日程格子 */
-        .schedule-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; }
-        .date-card { background: white; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; text-align: center; cursor: pointer; }
-        .date-card:hover { border-color: var(--accent); transform: translateY(-2px); transition: 0.2s; }
-
+        .schedule-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 15px; }
+        .date-card { background: white; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; text-align: center; cursor: pointer; font-weight: bold; }
+        .date-card:hover { border-color: var(--accent); background: #eff6ff; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px; border-bottom: 1px solid #edf2f7; text-align: left; }
         th { background: #f1f5f9; color: var(--primary); }
-
-        .result-tag { display: inline-block; background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 15px; font-size: 0.85rem; margin-right: 5px; }
-
-        @media (max-width: 768px) {
-            body { flex-direction: column; }
-            .sidebar { width: 100%; height: auto; }
-            .main-content { padding: 15px; }
-        }
-    </style>
-</head>
-<body>
-
-<div class="sidebar">
-    <div class="sidebar-header">
-        <img src="https://www.lmsccps.edu.hk/it-school/php/webcms/files/upload/logo/logo.png" width="50" style="margin-bottom:10px;"><br>
-        <strong>校隊管理系統</strong>
-    </div>
-    <div class="sidebar-menu">
-        <div class="nav-item active" onclick="showSearchPage()"><i class="fas fa-search"></i> 學生跨隊搜尋</div>
-        <div class="nav-group">點名系統</div>
-        <div id="team-menu"></div>
-    </div>
-</div>
-
-<div class="main-content">
-    <div class="card" id="app-card">
-        <h2 id="view-title">學生跨隊搜尋</h2>
-        <div id="content-area"></div>
-    </div>
-</div>
-
-<script>
-    // 校隊數據與日子設定
-    const teamData = [
-        { name: "田徑隊", days: [3], dName: "星期三", members: ["學生A", "學生B"] },
-        { name: "男子排球隊", days: [3, 5], dName: "星期三、五", members: ["學生D", "學生E"] },
-        { name: "女子排球隊", days: [1, 4], dName: "星期一、四", members: ["學生F", "學生G"] },
-        { name: "足球隊", days: [5, 6], dName: "星期五、六", members: ["學生H", "學生I"] },
-        { name: "籃球隊", days: [1, 5], dName: "星期一、五", members: ["學生J", "學生K"] },
-        { name: "閃避球隊", days: [3, 4], dName: "星期三、四", members: ["郭嘉烯", "張雨霏", "何雨馨", "白淽錤", "戴卓琦", "朱晉衡", "張璟釩", "吳穎禧", "王詩琪", "王詩詩", "陳樂兒", "吳浩添"] },
-        { id: 7, name: "乒乓球隊", days: [1, 2, 3, 4, 5], dName: "星期一至五", members: ["學生L", "學生M"] },
-        { id: 8, name: "長跑隊", days: [1, 5], dName: "星期一、五", members: ["學生N", "學生O"] },
-        { id: 9, name: "欖球隊", days: [4], dName: "星期四", members: ["學生P", "學生Q"] }
-    ];
-
-    // 初始化側邊選單
-    const menu = document.getElementById('team-menu');
-    teamData.forEach(team => {
-        const div = document.createElement('div');
-        div.className = 'nav-item';
-        div.innerHTML = `<i class="fas fa-users"></i> ${team.name}`;
-        div.onclick = () => showSchedule(team);
-        menu.appendChild(div);
-    });
-
-    // 搜尋功能
-    function showSearchPage() {
-        document.getElementById('view-title').innerText = "學生跨隊搜尋";
-        document.getElementById('content-area').innerHTML = `
-            <p>輸入學生姓名，檢查其參加的所有校隊及時間是否衝突：</p>
-            <div class="search-box">
-                <input type="text" id="stu-name" class="search-input" placeholder="例如：郭嘉烯">
-                <button class="search-btn" onclick="performSearch()">搜尋</button>
-            </div>
-            <div id="search-results"></div>
-        `;
-    }
-
-    function performSearch() {
-        const name = document.getElementById('stu-name').value.trim();
-        const resultsArea = document.getElementById('search-results');
-        if (!name) return;
-
-        const foundTeams = teamData.filter(t => t.members.includes(name));
-        
-        if (foundTeams.length === 0) {
-            resultsArea.innerHTML = `<p style="color:red;">找不到學生「${name}」的校隊資料。</p>`;
-        } else {
-            let html = `<h4>「${name}」的校隊紀錄：</h4><table><tr><th>參加校隊</th><th>訓練時間</th></tr>`;
-            foundTeams.forEach(t => {
-                html += `<tr><td><span class="result-tag">${t.name}</span></td><td>${t.dName}</td></tr>`;
-            });
-            html += `</table>`;
-            if (foundTeams.length > 1) {
-                html += `<p style="color:#e67e22; font-weight:bold;"><i class="fas fa-exclamation-triangle"></i> 注意：該學生參加了 ${foundTeams.length} 個校隊，請檢查時間是否重複。</p>`;
-            }
-            resultsArea.innerHTML = html;
-        }
-    }
-
-    // 顯示日程頁面 (點名功能)
-    function showSchedule(team) {
-        document.getElementById('view-title').innerText = team.name + " - 練習日程";
-        let html = '<div class="schedule-grid">';
-        let curr = new Date();
-        const end = new Date(2026, 5, 30);
-        while (curr <= end) {
-            if (team.days.includes(curr.getDay())) {
-                const dStr = curr.toISOString().split('T')[0];
-                html += `<div class="date-card" onclick="alert('${dStr} 點名表格')">${dStr.substring(5)}</div>`;
-            }
-            curr.setDate(curr.getDate() + 1);
-        }
-        document.getElementById('content-area').innerHTML = html + '</div>';
-    }
-
-    // 預設顯示搜尋頁
-    showSearchPage();
-</script>
-
-</body>
-</html>
+        .btn { padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 15px; }
+        .btn-back { background: #64748b; color: white; }
+        .btn-excel { background: #166
