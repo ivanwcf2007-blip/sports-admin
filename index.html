@@ -3,81 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>梨木樹天主教小學 - 雲端同步管理系統</title>
+    <title>梨木樹天主教小學 - 校隊雲端管理</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --blue: #1e3a8a; --light-blue: #3b82f6; --bg: #f8fafc; }
+        :root { --blue: #1e3a8a; --light-blue: #3b82f6; }
         body { 
             font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; 
-            background-color: var(--bg);
-            /* 嵌入校徽作為背景浮水印 */
-            background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZyBvcGFjaXR5PSIwLjEiPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjQ1IiBmaWxsPSIjMWUzYThhIi8+PHRleHQgeD0iNTAiIHk9IjU1IiBmb250LXNpemU9IjEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+TE1TQ0NQUzwvdGV4dD48L2c+PC9zdmc+");
-            background-repeat: no-repeat; background-position: center; background-size: 400px;
+            background-color: #f8fafc;
+            /* 直接嵌入校徽作為背景浮水印 */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 5 L90 25 L90 75 L50 95 L10 75 L10 25 Z" fill="none" stroke="%231e3a8a" stroke-width="1" opacity="0.1"/><text x="50" y="55" font-size="8" text-anchor="middle" fill="%231e3a8a" opacity="0.1">LMSCCPS</text></svg>');
+            background-repeat: no-repeat; background-position: center; background-size: 500px;
         }
-        .header { background: var(--blue); color: white; padding: 15px; text-align: center; font-weight: bold; position: relative; }
-        .logo-img { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); height: 40px; background: white; border-radius: 50%; padding: 2px; }
+        .header { background: var(--blue); color: white; padding: 15px; text-align: center; font-weight: bold; }
         .wrapper { display: flex; flex: 1; overflow: hidden; }
         .sidebar { width: 240px; background: rgba(255,255,255,0.9); border-right: 1px solid #ddd; overflow-y: auto; }
-        .main-content { flex: 1; padding: 20px; overflow-y: auto; background: rgba(255,255,255,0.7); }
-        .nav-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-        .nav-item:hover { background: #eff6ff; }
+        .main { flex: 1; padding: 20px; overflow-y: auto; background: rgba(255,255,255,0.7); }
+        .nav-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; color: #333; }
         .active { background: var(--light-blue) !important; color: white !important; }
         .date-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 15px; }
         .date-btn { border: 1px solid var(--light-blue); background: white; padding: 12px; border-radius: 8px; text-align: center; cursor: pointer; font-weight: bold; color: var(--blue); }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background: #f1f5f9; }
-        .btn { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+        .btn { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         .btn-save { background: #16a34a; color: white; }
         .btn-excel { background: #ea580c; color: white; margin-left: 10px; }
-        .search-area { background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
-        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:999; justify-content:center; align-items:center; font-weight:bold; color:var(--blue); }
+        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:999; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
 
-<div id="loader">☁️ 雲端同步中，請稍候...</div>
-
-<div class="header">
-    <img src="https://www.lmsccps.edu.hk/it-school/php/webcms/files/upload/logo/logo.png" class="logo-img" onerror="this.style.display='none'">
-    梨木樹天主教小學 - 校隊管理系統
-</div>
+<div id="loader">⚙️ 正在與雲端同步...</div>
+<div class="header">梨木樹天主教小學 - 校隊管理系統</div>
 
 <div class="wrapper">
     <div class="sidebar">
-        <div class="nav-item active" onclick="location.reload()"><i class="fas fa-search"></i> 學生搜尋</div>
-        <div style="background:#f1f5f9; padding:10px; font-size:12px; font-weight:bold;">校隊點名</div>
+        <div class="nav-item active" onclick="location.reload()">系統首頁 / 搜尋</div>
+        <div style="background:#f1f5f9; padding:10px; font-size:12px; font-weight:bold;">校隊列表</div>
         <div id="team-menu"></div>
     </div>
-    
-    <div class="main-content" id="display-area">
-        <div class="search-area">
-            <h3>學生跨隊搜尋 (查重疊)</h3>
-            <input type="text" id="search-input" style="padding:10px; width:200px; border:1px solid #ccc; border-radius:4px;" placeholder="輸入學生姓名">
-            <button class="btn btn-save" onclick="searchStudent()">搜尋</button>
-            <div id="search-result" style="margin-top:15px;"></div>
+    <div class="main" id="display-area">
+        <div style="background:white; padding:20px; border-radius:8px; border:1px solid #ddd;">
+            <h3>學生搜尋 (查重疊)</h3>
+            <input type="text" id="s-input" style="padding:10px; width:200px;" placeholder="輸入學生姓名">
+            <button class="btn btn-save" onclick="doSearch()">搜尋</button>
+            <div id="s-res" style="margin-top:15px;"></div>
         </div>
-        <p>請點擊左側選單進入校隊點名或匯出報表。</p>
     </div>
 </div>
 
 <script>
     // 【請更換為你的 Google API 網址】
-    const API_URL = https://script.google.com/macros/s/AKfycbynJfvMRxHd0ojBDkfJn7USwWRTGhteTDkhC1sISlVK8u3z5HaeN3jGSrQbF1xMFGds/exec;
+    const API_URL = "https://script.google.com/macros/s/AKfycbynJfvMRxHd0ojBDkfJn7USwWRTGhteTDkhC1sISlVK8u3z5HaeN3jGSrQbF1xMFGds/exec";
 
-    // 加入班別與學號的資料結構
     const teamData = [
         { 
             name: "閃避球隊", 
             days: [3, 4], 
             members: [
-                { name: "郭嘉烯", class: "6A", no: "10" },
-                { name: "張雨霏", class: "6B", no: "12" },
-                { name: "何雨馨", class: "6A", no: "05" },
-                { name: "白淽錤", class: "5C", no: "03" },
-                { name: "戴卓琦", class: "5A", no: "08" },
-                { name: "朱晉衡", class: "6C", no: "01" },
-                { name: "張璟釩", class: "4B", no: "15" },
-                { name: "吳穎禧", class: "4D", no: "20" },
-                { name: "王詩琪", class: "5B", no: "22" },
-                { name: "王詩詩", class: "5B
+                { name: "郭嘉烯", class: "6
