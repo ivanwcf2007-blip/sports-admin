@@ -3,36 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>梨木樹天主教小學 - 校隊管理系統</title>
+    <title>梨木樹天主教小學 - 校隊管理</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #1e3a8a; --accent: #3b82f6; --bg: #f8fafc; --success: #22c55e; }
-        * { box-sizing: border-box; }
-        body { 
-            font-family: "PingFang HK", "Microsoft JhengHei", sans-serif; 
-            margin: 0; display: flex; height: 100vh; background-color: var(--bg);
-            background-image: url('https://www.lmsccps.edu.hk/it-school/php/webcms/files/upload/logo/logo.png');
-            background-repeat: no-repeat; background-position: center; background-attachment: fixed;
-            background-size: 300px; background-color: rgba(248, 250, 252, 0.94); background-blend-mode: overlay;
+        :root { --primary: #1e3a8a; --accent: #3b82f6; --bg: #f1f5f9; }
+        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: var(--bg); }
+        
+        /* 導航欄 */
+        .header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar { width: 250px; background: white; border-right: 1px solid #ddd; overflow-y: auto; display: block; }
+        .container { display: flex; flex: 1; overflow: hidden; }
+        
+        /* 手機適應 */
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; height: 200px; border-right: none; border-bottom: 1px solid #ddd; }
         }
-        .sidebar { width: 260px; background: var(--primary); color: white; display: flex; flex-direction: column; z-index: 10; flex-shrink: 0; }
-        .sidebar-header { padding: 20px; text-align: center; background: #172554; }
-        .sidebar-menu { flex: 1; overflow-y: auto; padding: 10px; }
-        .nav-item { padding: 12px 15px; cursor: pointer; margin-bottom: 5px; border-radius: 8px; display: flex; align-items: center; transition: 0.2s; color: #cbd5e1; text-decoration: none; }
-        .nav-item i { width: 25px; }
-        .nav-item:hover, .nav-item.active { background: var(--accent); color: white; }
-        .nav-group { font-size: 0.75rem; color: #94a3b8; padding: 15px 15px 5px; text-transform: uppercase; }
-        .main-content { flex: 1; padding: 25px; overflow-y: auto; }
-        .card { background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 15px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); backdrop-filter: blur(5px); }
-        .search-box { margin-bottom: 20px; display: flex; gap: 10px; }
-        .search-input { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; }
-        .search-btn { background: var(--primary); color: white; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; }
-        .schedule-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 15px; }
-        .date-card { background: white; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; text-align: center; cursor: pointer; font-weight: bold; }
-        .date-card:hover { border-color: var(--accent); background: #eff6ff; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 12px; border-bottom: 1px solid #edf2f7; text-align: left; }
-        th { background: #f1f5f9; color: var(--primary); }
-        .btn { padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 15px; }
+
+        .menu-item { padding: 12px 20px; cursor: pointer; border-bottom: 1px solid #eee; transition: 0.2s; }
+        .menu-item:hover { background: #eff6ff; }
+        .active { background: var(--accent) !important; color: white; }
+
+        .main { flex: 1; padding: 20px; overflow-y: auto; background: rgba(255,255,255,0.8); }
+        .date-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+        .date-btn { background: white; border: 1px solid #3b82f6; padding: 15px 5px; border-radius: 8px; text-align: center; cursor: pointer; font-weight: bold; color: #1e3a8a; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #f8fafc; }
+        
+        .btn { padding: 8px 15px; border-radius: 5px; border: none; cursor: pointer; margin: 5px; font-weight: bold; }
+        .btn-excel { background: #16a34a; color: white; }
         .btn-back { background: #64748b; color: white; }
-        .btn-excel { background: #166
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <span><i class="fas fa-school"></i> 梨木樹天主教小學</span>
+    <span id="current-view">系統首頁</span>
+</div>
+
+<div class="container">
+    <div class="sidebar" id="sidebar">
+        <div class="menu-item active" onclick="location.reload()"><i class="fas fa-home"></i> 刷新首頁</div>
+        <div style="padding:10px; background:#eee; font-size:12px;">校隊點名</div>
+        <div id="team-list"></div>
+    </div>
+
+    <div class="main" id="content">
+        <h2>歡迎使用校隊管理系統</h2>
+        <p>請先在左方選單選擇校隊。</p>
+        <hr>
+        <h4>功能說明：</h4>
+        <ul>
+            <li>點擊校隊名單查看訓練日子</li>
+            <li>點擊特定日期進行點名</li>
+            <li>可匯出 CSV 檔案供 Excel 使用</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // 數據區
+    const teams = [
+        { name: "田徑隊", days: [3], members: ["學生A", "學生B"] },
+        { name: "男子排球隊", days: [3, 5], members: ["學生C", "學生D"] },
+        { name: "女子排球隊", days: [1, 4], members: ["學生E", "學生F"] },
+        { name: "足球隊", days: [5, 6], members: ["學生G", "學生H"] },
+        { name: "籃球隊", days: [1, 5], members: ["學生I", "學生J"] },
+        { name: "閃避球隊", days: [3, 4], members: ["郭嘉烯", "張雨霏", "何雨馨", "白淽錤", "戴卓琦", "朱晉衡", "張璟釩", "吳穎禧", "王詩琪", "王詩詩", "陳樂兒", "吳浩添"] },
+        { name: "乒乓球隊", days: [1, 2, 3, 4, 5], members: ["學生K", "學生L"] },
+        { name: "長跑隊", days: [1, 5], members: ["學生M", "學生N"] },
+        { name: "欖球隊", days: [4], members: ["學生O", "學生P"] }
+    ];
+
+    // 初始化選單
+    const teamList = document.getElementById('team-list');
+    teams.forEach((team, index) => {
+        const div = document.createElement('div');
+        div.className = 'menu-item';
+        div.innerHTML = `<i class="fas fa-chevron-right"></i> ${team.name}`;
+        div.onclick = () => {
+            document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+            div.classList.add('active');
+            showDates(index);
+        };
+        teamList.appendChild(div);
+    });
+
+    // 顯示日期列表
+    function showDates(index) {
+        const team = teams[index];
+        document.getElementById('current-view').innerText = team.name;
+        let html = `<h3>${team.name} - 選擇練習日期</h3><div class="date-grid">`;
+        
+        let curr = new Date();
+        const end = new Date(2026, 5, 30);
+        
+        while(curr <= end) {
+            if(team.days.includes(curr.getDay())) {
+                const dStr = curr.toISOString().split('T')[0];
+                html += `<div class="date-btn" onclick="showRollCall(${index}, '${dStr}')">${dStr.substring(5)}</div>`;
+            }
+            curr.setDate(curr.getDate() + 1);
+        }
+        document.getElementById('content').innerHTML = html + `</div>`;
+    }
+
+    // 顯示點名表格
+    function showRollCall(index, date) {
+        const team = teams[index];
+        let html = `<h3>${team.name} (${date})</h3>`;
+        html += `<button class="btn btn-back" onclick="showDates(${index})">返回日期</button>`;
+        html += `<button class="btn btn-excel" onclick="exportCSV('${team.name}', '${date}')">匯出 Excel</button>`;
+        html += `<table id="roll-table"><thead><tr><th>姓名</th><th>出席</th></tr></thead><tbody>`;
+        
+        team.members.forEach(m => {
+            html += `<tr><td>${m}</td><td>
+                <select><option>出席</option><option>遲到</option><option>缺席</option></select>
+            </td></tr>`;
+        });
+        
+        document.getElementById('content').innerHTML = html + `</tbody></table>`;
+    }
+
+    // 匯出 CSV
+    function exportCSV(name, date) {
+        let csv = "\uFEFF姓名,狀態\n";
+        const rows = document.querySelectorAll('#roll-table tbody tr');
+        rows.forEach(r => {
+            csv += `${r.cells[0].innerText},${r.querySelector('select').value}\n`;
+        });
+        const blob = new Blob([csv], {type: 'text/csv'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${name}_${date}.csv`;
+        a.click();
+    }
+</script>
+
+</body>
+</html>
