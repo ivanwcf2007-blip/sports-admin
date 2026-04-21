@@ -3,128 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>梨木樹天主教小學 - 雲端同步版</title>
+    <title>梨木樹天主教小學 - 雲端同步管理系統</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --blue: #1e3a8a; --light-blue: #3b82f6; }
-        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f8fafc; }
-        .header { background: var(--blue); color: white; padding: 15px; text-align: center; }
+        :root { --blue: #1e3a8a; --light-blue: #3b82f6; --bg: #f8fafc; }
+        body { 
+            font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; 
+            background-color: var(--bg);
+            /* 嵌入校徽作為背景浮水印 */
+            background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZyBvcGFjaXR5PSIwLjEiPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjQ1IiBmaWxsPSIjMWUzYThhIi8+PHRleHQgeD0iNTAiIHk9IjU1IiBmb250LXNpemU9IjEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+TE1TQ0NQUzwvdGV4dD48L2c+PC9zdmc+");
+            background-repeat: no-repeat; background-position: center; background-size: 400px;
+        }
+        .header { background: var(--blue); color: white; padding: 15px; text-align: center; font-weight: bold; position: relative; }
+        .logo-img { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); height: 40px; background: white; border-radius: 50%; padding: 2px; }
         .wrapper { display: flex; flex: 1; overflow: hidden; }
-        .sidebar { width: 220px; background: white; border-right: 1px solid #ddd; overflow-y: auto; }
-        .main { flex: 1; padding: 20px; overflow-y: auto; }
-        .nav-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
-        .active { background: var(--light-blue) !important; color: white; }
+        .sidebar { width: 240px; background: rgba(255,255,255,0.9); border-right: 1px solid #ddd; overflow-y: auto; }
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; background: rgba(255,255,255,0.7); }
+        .nav-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .nav-item:hover { background: #eff6ff; }
+        .active { background: var(--light-blue) !important; color: white !important; }
         .date-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 15px; }
-        .date-btn { border: 1px solid var(--light-blue); padding: 12px; border-radius: 5px; text-align: center; cursor: pointer; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        .btn { padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; margin: 5px 0; }
+        .date-btn { border: 1px solid var(--light-blue); background: white; padding: 12px; border-radius: 8px; text-align: center; cursor: pointer; font-weight: bold; color: var(--blue); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+        th { background: #f1f5f9; }
+        .btn { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
         .btn-save { background: #16a34a; color: white; }
-        .loading-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; justify-content:center; align-items:center; }
+        .btn-excel { background: #ea580c; color: white; margin-left: 10px; }
+        .search-area { background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
+        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:999; justify-content:center; align-items:center; font-weight:bold; color:var(--blue); }
     </style>
 </head>
 <body>
 
-<div id="loader" class="loading-overlay">雲端同步中...</div>
-<div class="header">梨木樹天主教小學 - 雲端校隊管理</div>
+<div id="loader">☁️ 雲端同步中，請稍候...</div>
+
+<div class="header">
+    <img src="https://www.lmsccps.edu.hk/it-school/php/webcms/files/upload/logo/logo.png" class="logo-img" onerror="this.style.display='none'">
+    梨木樹天主教小學 - 校隊管理系統
+</div>
 
 <div class="wrapper">
     <div class="sidebar">
-        <div class="nav-item active" onclick="location.reload()">重新整理/搜尋</div>
+        <div class="nav-item active" onclick="location.reload()"><i class="fas fa-search"></i> 學生搜尋</div>
+        <div style="background:#f1f5f9; padding:10px; font-size:12px; font-weight:bold;">校隊點名</div>
         <div id="team-menu"></div>
     </div>
-    <div class="main" id="display-area">
-        <h3>學生搜尋</h3>
-        <input type="text" id="s-input" placeholder="學生姓名">
-        <button onclick="doSearch()">搜尋</button>
-        <div id="s-res"></div>
+    
+    <div class="main-content" id="display-area">
+        <div class="search-area">
+            <h3>學生跨隊搜尋 (查重疊)</h3>
+            <input type="text" id="search-input" style="padding:10px; width:200px; border:1px solid #ccc; border-radius:4px;" placeholder="輸入學生姓名">
+            <button class="btn btn-save" onclick="searchStudent()">搜尋</button>
+            <div id="search-result" style="margin-top:15px;"></div>
+        </div>
+        <p>請點擊左側選單進入校隊點名或匯出報表。</p>
     </div>
 </div>
 
 <script>
-    // 【請在此處替換】
-    const API_URL = "https://script.google.com/macros/s/AKfycbynJfvMRxHd0ojBDkfJn7USwWRTGhteTDkhC1sISlVK8u3z5HaeN3jGSrQbF1xMFGds/exec";
+    // 【請更換為你的 Google API 網址】
+    const API_URL = https://script.google.com/macros/s/AKfycbynJfvMRxHd0ojBDkfJn7USwWRTGhteTDkhC1sISlVK8u3z5HaeN3jGSrQbF1xMFGds/exec;
 
+    // 加入班別與學號的資料結構
     const teamData = [
-        { name: "閃避球隊", days: [3, 4], members: ["郭嘉烯", "張雨霏", "何雨馨", "白淽錤", "戴卓琦", "朱晉衡", "張璟釩", "吳穎禧", "王詩琪", "王詩詩", "陳樂兒", "吳浩添"] },
-        { name: "田徑隊", days: [3], members: ["學生A", "學生B"] }
-        // ... 其他隊伍比照前一版本貼入
-    ];
-
-    let cloudData = [];
-
-    // 從雲端抓資料
-    async function fetchCloud() {
-        document.getElementById('loader').style.display = 'flex';
-        try {
-            const resp = await fetch(API_URL);
-            cloudData = await resp.json();
-            console.log("Cloud data loaded", cloudData);
-        } catch (e) { alert("讀取雲端失敗"); }
-        document.getElementById('loader').style.display = 'none';
-    }
-
-    // 初始化選單
-    const menu = document.getElementById('team-menu');
-    teamData.forEach((t, i) => {
-        const div = document.createElement('div');
-        div.className = 'nav-item';
-        div.innerText = t.name;
-        div.onclick = () => renderDates(i);
-        menu.appendChild(div);
-    });
-
-    function renderDates(idx) {
-        const team = teamData[idx];
-        let html = `<h3>${team.name}</h3><div class="date-grid">`;
-        let curr = new Date('2026-04-01');
-        while(curr <= new Date('2026-06-30')) {
-            if(team.days.includes(curr.getDay())) {
-                const d = curr.toISOString().split('T')[0];
-                html += `<div class="date-btn" onclick="renderRoll(${idx},'${d}')">${d.substring(5)}</div>`;
-            }
-            curr.setDate(curr.getDate()+1);
-        }
-        document.getElementById('display-area').innerHTML = html + "</div>";
-    }
-
-    function renderRoll(idx, date) {
-        const team = teamData[idx];
-        // 尋找雲端是否有該日期的點名紀錄
-        const record = cloudData.find(r => r.teamName === team.name && r.date === date);
-        const att = record ? record.attendance : {};
-
-        let html = `<h3>${team.name} (${date})</h3>`;
-        html += `<button class="btn btn-save" onclick="saveToCloud(${idx},'${date}')">上傳至雲端同步</button>`;
-        html += `<table><tr><th>姓名</th><th>狀態</th></tr>`;
-        team.members.forEach(m => {
-            const s = att[m] || "出席";
-            html += `<tr><td>${m}</td><td><select id="sel-${m}">
-                <option ${s=='出席'?'selected':''}>出席</option>
-                <option ${s=='請假'?'selected':''}>請假</option>
-                <option ${s=='遲到'?'selected':''}>遲到</option>
-                <option ${s=='缺席'?'selected':''}>缺席</option>
-            </select></td></tr>`;
-        });
-        document.getElementById('display-area').innerHTML = html + "</table>";
-    }
-
-    async function saveToCloud(idx, date) {
-        const team = teamData[idx];
-        const att = {};
-        team.members.forEach(m => att[m] = document.getElementById('sel-'+m).value);
-        
-        document.getElementById('loader').style.display = 'flex';
-        await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ teamName: team.name, date: date, attendance: att })
-        });
-        await fetchCloud(); // 重新整理
-        alert("上傳成功！所有裝置已同步。");
-        renderDates(idx);
-    }
-
-    window.onload = fetchCloud;
-</script>
-</body>
-</html>
+        { 
+            name: "閃避球隊", 
+            days: [3, 4], 
+            members: [
+                { name: "郭嘉烯", class: "6A", no: "10" },
+                { name: "張雨霏", class: "6B", no: "12" },
+                { name: "何雨馨", class: "6A", no: "05" },
+                { name: "白淽錤", class: "5C", no: "03" },
+                { name: "戴卓琦", class: "5A", no: "08" },
+                { name: "朱晉衡", class: "6C", no: "01" },
+                { name: "張璟釩", class: "4B", no: "15" },
+                { name: "吳穎禧", class: "4D", no: "20" },
+                { name: "王詩琪", class: "5B", no: "22" },
+                { name: "王詩詩", class: "5B
