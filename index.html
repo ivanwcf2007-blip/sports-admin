@@ -3,62 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>梨木樹天主教小學 - 校隊雲端管理</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>梨木樹天主教小學 - 校隊管理系統</title>
     <style>
         :root { --blue: #1e3a8a; --light-blue: #3b82f6; }
-        body { 
-            font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; 
-            background-color: #f8fafc;
-            /* 直接嵌入校徽作為背景浮水印 */
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 5 L90 25 L90 75 L50 95 L10 75 L10 25 Z" fill="none" stroke="%231e3a8a" stroke-width="1" opacity="0.1"/><text x="50" y="55" font-size="8" text-anchor="middle" fill="%231e3a8a" opacity="0.1">LMSCCPS</text></svg>');
-            background-repeat: no-repeat; background-position: center; background-size: 500px;
+        body { font-family: sans-serif; margin: 0; background-color: #f8fafc; height: 100vh; display: flex; flex-direction: column; 
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNDAwIj48ZyBvcGFjaXR5PSIwLjA1Ij48cGF0aCBkPSJNMjAwIDQwIEwzNDAgMTIwIEwzNDAgMjgwIEwyMDAgMzYwIEw2MCAyODAgTDYwIDEyMCBaIiBmaWxsPSJub25lIiBzdHJva2U9IiMxZTMhOGEiIHN0cm9rZS13aWR0aD0iNCIvPjx0ZXh0IHg9IjIwMCIgeT0iMjEwIiBmb250LXNpemU9IjMwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMWUzYThhIj5MTVNDQ1BTPC90ZXh0PjwvZz48L3N2Zz4=');
+            background-repeat: no-repeat; background-position: center; background-size: 600px;
         }
         .header { background: var(--blue); color: white; padding: 15px; text-align: center; font-weight: bold; }
         .wrapper { display: flex; flex: 1; overflow: hidden; }
-        .sidebar { width: 240px; background: rgba(255,255,255,0.9); border-right: 1px solid #ddd; overflow-y: auto; }
-        .main { flex: 1; padding: 20px; overflow-y: auto; background: rgba(255,255,255,0.7); }
-        .nav-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; color: #333; }
+        .sidebar { width: 260px; background: rgba(255,255,255,0.9); border-right: 1px solid #ddd; overflow-y: auto; padding: 10px; }
+        .main { flex: 1; padding: 20px; overflow-y: auto; background: rgba(255,255,255,0.6); }
+        .nav-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; border-radius: 4px; margin-bottom: 5px; }
+        .nav-item:hover { background: #e2e8f0; }
         .active { background: var(--light-blue) !important; color: white !important; }
-        .date-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 15px; }
-        .date-btn { border: 1px solid var(--light-blue); background: white; padding: 12px; border-radius: 8px; text-align: center; cursor: pointer; font-weight: bold; color: var(--blue); }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #ddd; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #f1f5f9; }
-        .btn { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
-        .btn-save { background: #16a34a; color: white; }
-        .btn-excel { background: #ea580c; color: white; margin-left: 10px; }
+        .btn { padding: 8px 15px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; margin: 5px; }
+        .btn-add { background: #16a34a; color: white; }
+        .btn-save { background: #2563eb; color: white; }
+        .btn-del { background: #dc2626; color: white; }
         #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:999; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
-
-<div id="loader">⚙️ 正在與雲端同步...</div>
-<div class="header">梨木樹天主教小學 - 校隊管理系統</div>
-
+<div id="loader">⚙️ 雲端處理中...</div>
+<div class="header">梨木樹天主教小學 - 校隊雲端管理系統</div>
 <div class="wrapper">
     <div class="sidebar">
-        <div class="nav-item active" onclick="location.reload()">系統首頁 / 搜尋</div>
-        <div style="background:#f1f5f9; padding:10px; font-size:12px; font-weight:bold;">校隊列表</div>
+        <div class="nav-item active" onclick="showManager()">⚙️ 校隊管理/新增</div>
+        <hr>
         <div id="team-menu"></div>
     </div>
-    <div class="main" id="display-area">
-        <div style="background:white; padding:20px; border-radius:8px; border:1px solid #ddd;">
-            <h3>學生搜尋 (查重疊)</h3>
-            <input type="text" id="s-input" style="padding:10px; width:200px;" placeholder="輸入學生姓名">
-            <button class="btn btn-save" onclick="doSearch()">搜尋</button>
-            <div id="s-res" style="margin-top:15px;"></div>
-        </div>
-    </div>
+    <div class="main" id="display-area"></div>
 </div>
 
 <script>
-    // 【請更換為你的 Google API 網址】
-    const API_URL = "https://script.google.com/macros/s/AKfycbynJfvMRxHd0ojBDkfJn7USwWRTGhteTDkhC1sISlVK8u3z5HaeN3jGSrQbF1xMFGds/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzE_1UhOs-o6Tzi0-_WRQRZ-z-ogoW3DG0JyxWXpqKumNuk5G_eaH-AHpUfWd-shkbx/exec";
+    let teams = []; let cloudAtt = [];
 
-    const teamData = [
-        { 
-            name: "閃避球隊", 
-            days: [3, 4], 
-            members: [
-                { name: "郭嘉烯", class: "6
+    async function init() {
+        if(API_URL.includes("這裡")) { alert("請先設定 API 網址"); return; }
+        document.getElementById('loader').style.display = 'flex';
+        try {
+            const resp = await fetch(API_URL);
+            const data = await resp.json();
+            teams = data.teams || [];
+            cloudAtt = data.attendance || [];
+            renderSidebar();
+            showManager();
+        } catch(e) { console.error(e); }
+        document.getElementById('loader').style.display = 'none';
+    }
+
+    function renderSidebar() {
+        const menu = document.getElementById('team-menu');
+        menu.innerHTML = '<div style="font-size:12px; font-weight:bold; color:#666; padding:5px;">校隊點名列表</div>';
+        teams.forEach((t, i) => {
+            const div = document.createElement('div');
+            div.className = 'nav-item';
+            div.innerText = t.name;
+            div.onclick = () => renderDates(i);
+            menu.appendChild(div);
+        });
+    }
+
+    function showManager() {
+        let html = `<div class="card"><h3>校隊管理中心</h3>
+            <p>在此新增校隊或修改現有名單。</p>
+            <button class="btn btn-add" onclick="addTeam()">+ 新增校隊</button>
+            <button class="btn btn-save" onclick="saveConfig()">💾 儲存並同步校隊設定</button>
+        </div>`;
+        teams.forEach((t, i) => {
+            html += `<div class="card">
+                <input type="text" value="${t.name}" onchange="teams[${i}].name=this.value" style="font-size:18px; font-weight:bold; width:200px;">
+                <button class="btn btn-del" onclick="teams.splice(${i},1);showManager()">刪除此隊</button><br>
+                練習日(0=日,1=一...): <input type="text" value="${t.days.join(',')}" onchange="teams[${i}].days=this.value.split(',').map(Number)">
+                <h4>學生名單 (格式: 班別,學號,姓名)</h4>
+                <textarea style="width:100%; height:100px;" onchange="updateMembers(${i}, this.value)">${t.members.map(m => `${m.class},${m.no},${m.name}`).join('\n')}</textarea>
+            </div>`;
+        });
+        document.getElementById('display-area').innerHTML = html;
+    }
+
+    function addTeam() { teams.push({name: "新校隊", days: [3], members: []}); showManager(); }
+    function updateMembers(idx, val) {
+        teams[idx].members = val.split('\n').filter(line => line.trim()).map(line => {
+            const [c, n, name] = line.split(',');
+            return { class: c, no: n, name: name };
+        });
+    }
+
+    async function saveConfig() {
+        document.getElementById('loader').style.display = 'flex';
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ type: "CONFIG", teams: teams }) });
+        alert("設定已儲存至雲端！");
+        init();
+    }
+
+    function renderDates(idx) {
+        const t = teams[idx];
+        let html = `<h3>${t.name} - 選擇日期</h3><div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(80px,1fr)); gap:10px;">`;
+        let curr = new Date('2026-04-01');
+        while(curr <= new Date('2026-06-30')) {
+            if(t.days.includes(curr.getDay())) {
+                const d = curr.toISOString().split('T')[0];
+                html += `<button class="btn" style="background:white; border:1px solid var(--blue);" onclick="renderRoll(${idx},'${d}')">${d.substring(5)}</button>`;
+            }
+            curr.setDate(curr.getDate()+1);
+        }
+        document.getElementById('display-area').innerHTML = html + "</div>";
+    }
+
+    function renderRoll(idx, date) {
+        const t = teams[idx];
+        const record = cloudAtt.find(r => r.teamName === t.name && r.date === date);
+        const att = record ? record.attendance : {};
+        let html = `<h3>${t.name} (${date})</h3><button class="btn btn-save" onclick="saveAtt(${idx},'${date}')">儲存點名</button><table>`;
+        html += `<tr><th>班別</th><th>學號</th><th>姓名</th><th>狀態</th></tr>`;
+        t.members.forEach(m => {
+            const s = att[m.name] || "出席";
+            html += `<tr><td>${m.class}</td><td>${m.no}</td><td>${m.name}</td><td><select id="s-${m.name}">`;
+            ["出席","請假","遲到","缺席"].forEach(o => html += `<option ${s==o?'selected':''}>${o}</option>`);
+            html += `</select></td></tr>`;
+        });
+        document.getElementById('display-area').innerHTML = html + "</table>";
+    }
+
+    async function saveAtt(idx, date) {
+        const t = teams[idx]; const att = {};
+        t.members.forEach(m => att[m.name] = document.getElementById('s-'+m.name).value);
+        document.getElementById('loader').style.display = 'flex';
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ teamName: t.name, date: date, attendance: att }) });
+        alert("點名已同步！");
+        init();
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
