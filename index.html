@@ -2,21 +2,21 @@
 <html lang="zh-Hant">
 <head>
     <script>
-        // 1. ⚠️ 請把引號內的文字換成您的 Google API 網址 ⚠️
+        // 1. ⚠️ 在這裡貼上您的網址，確保引號還在 ⚠️
         const API_URL = "https://script.google.com/macros/library/d/1FvxO9uFjQ0X7VIJ7_0srq6BzIDHgleegJzmln4wyIUB5uEIzDYRPvK4X/8"; 
     </script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LMSCCPS 校隊點名系統</title>
+    <title>LMSCCPS 點名系統</title>
     <style>
         :root { --blue: #1e3a8a; --light: #f8fafc; --border: #e2e8f0; }
-        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: var(--light); color: #1e293b; overflow: hidden; }
+        body { font-family: system-ui, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: var(--light); overflow: hidden; }
         header { background: var(--blue); color: white; padding: 15px; display: flex; align-items: center; z-index: 2000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 60px; box-sizing: border-box; }
-        .menu-toggle { background: #3b82f6; border: none; color: white; padding: 8px 12px; border-radius: 4px; margin-right: 15px; cursor: pointer; display: none; font-size: 16px; }
+        .menu-toggle { background: #3b82f6; border: none; color: white; padding: 8px 12px; border-radius: 4px; margin-right: 15px; cursor: pointer; display: none; }
         .container { display: flex; flex: 1; overflow: hidden; position: relative; }
         aside { width: 260px; background: white; border-right: 1px solid var(--border); overflow-y: auto; transition: 0.3s; z-index: 1500; }
-        .nav-item { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 16px; }
+        .nav-item { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
         .nav-item.active { background: #eff6ff; color: var(--blue); font-weight: bold; border-left: 4px solid var(--blue); }
         main { flex: 1; padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         @media (max-width: 991px) {
@@ -30,7 +30,7 @@
         .btn { padding: 12px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
         .btn-blue { background: var(--blue); color: white; }
         textarea { width: 100%; height: 200px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
-        select { padding: 10px; border-radius: 4px; border: 1px solid #ccc; width: 100%; font-size: 16px; background: white; }
+        select { padding: 10px; border-radius: 4px; border: 1px solid #ccc; width: 100%; background: white; }
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; justify-content: center; align-items: center; z-index: 9999; flex-direction: column; }
     </style>
 </head>
@@ -49,10 +49,7 @@
         <div style="padding:15px 20px; font-size:12px; color:#94a3b8; font-weight:bold; background:#f8fafc;">校隊列表</div>
         <div id="team-list"></div>
     </aside>
-
-    <main id="main-content">
-        <div style="padding:50px; text-align:center; color:#94a3b8;">請填寫 API 網址並儲存</div>
-    </main>
+    <main id="main-content"></main>
 </div>
 
 <script>
@@ -60,11 +57,13 @@
     let attendance = [];
 
     window.onload = () => {
-        if (API_URL === "您的網址貼在這裡" || API_URL === "") {
+        // 自動檢查網址是否正確
+        if (!API_URL.startsWith("https://script.google.com")) {
             document.getElementById('main-content').innerHTML = `
                 <div class="card" style="border:2px solid red;">
-                    <h3 style="color:red;">⚠️ 尚未連接資料庫</h3>
-                    <p>請在代碼第 5 行填入 Google Apps Script 的網址。</p>
+                    <h3 style="color:red;">⚠️ API 網址格式錯誤</h3>
+                    <p>您目前的網址是: <code style="background:#eee;">${API_URL}</code></p>
+                    <p>請確認代碼第 5 行貼上的網址是以 <strong>https://script.google.com</strong> 開頭。</p>
                 </div>`;
             return;
         }
@@ -81,14 +80,21 @@
             renderSidebar();
             showSection('config');
         } catch (e) {
-            alert("連線失敗！請檢查 API 網址或 Google 權限是否設為「所有人」。");
+            document.getElementById('main-content').innerHTML = `
+                <div class="card" style="border:2px solid orange;">
+                    <h3>📡 連線失敗</h3>
+                    <p>請檢查：</p>
+                    <ul>
+                        <li>Google Apps Script 是否已「部署」為「所有人(Anyone)」？</li>
+                        <li>網路是否正常？</li>
+                    </ul>
+                    <button class="btn btn-blue" onclick="location.reload()">重新整理</button>
+                </div>`;
         }
         showLoading(false);
     }
 
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-    }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
     function renderSidebar() {
         const list = document.getElementById('team-list');
@@ -112,13 +118,13 @@
         if (type === 'config') {
             document.getElementById('btn-mgr').classList.add('active');
             let h = `<h2>⚙️ 管理中心</h2>
-                     <button class="btn btn-blue" onclick="saveConfig()">💾 儲存到雲端</button>
+                     <button class="btn btn-blue" onclick="saveConfig()">💾 儲存名單</button>
                      <button class="btn" style="background:#ddd; margin-left:10px;" onclick="addTeam()">+ 新增隊伍</button><hr>`;
             teams.forEach((t, i) => {
                 h += `<div class="card">
                     隊名: <input type="text" value="${t.name}" onchange="teams[${i}].name=this.value" style="width:100%; padding:8px; margin:5px 0;"><br>
                     名單:<br><textarea onchange="updateMembers(${i}, this.value)">${t.members.map(m => `${m.class} ${m.no} ${m.name}`).join('\n')}</textarea>
-                    <button onclick="if(confirm('刪除？')){teams.splice(${i},1);showSection('config')}" style="color:red; background:none; border:none; margin-top:10px; cursor:pointer;">🗑️ 刪除此隊</button>
+                    <button onclick="if(confirm('刪除？')){teams.splice(${i},1);showSection('config')}" style="color:red; background:none; border:none; margin-top:10px;">🗑️ 刪除</button>
                 </div>`;
             });
             main.innerHTML = h;
@@ -142,7 +148,7 @@
         const record = attendance.find(r => r.teamName === t.name && r.date === date);
         const attData = record ? record.attendance : {};
         let h = `<h3>${date}</h3>
-                 <button class="btn btn-blue" onclick="saveAtt(${idx},'${date}')">💾 儲存今日點名</button>
+                 <button class="btn btn-blue" onclick="saveAtt(${idx},'${date}')">💾 儲存點名</button>
                  <button class="btn" style="margin-left:10px;" onclick="showSection('team',${idx})">返回</button>
                  <table><tr><th>學生</th><th>狀態</th></tr>`;
         t.members.forEach(m => {
@@ -150,7 +156,7 @@
             h += `<tr><td>${m.class}-${m.no} ${m.name}</td>
                   <td><select id="s-${m.name}"><option ${s=='出席'?'selected':''}>出席</option><option ${s=='請假'?'selected':''}>請假</option><option ${s=='遲到'?'selected':''}>遲到</option><option ${s=='缺席'?'selected':''}>缺席</option></select></td></tr>`;
         });
-        document.getElementById('main-content').innerHTML = h + "</table><br><br>";
+        document.getElementById('main-content').innerHTML = h + "</table>";
     }
 
     function updateMembers(idx, val) {
@@ -163,10 +169,9 @@
     function addTeam() { teams.unshift({name: "新校隊", days: [1], members: []}); showSection('config'); }
 
     async function saveConfig() {
-        showLoading(true, "正在同步名單...");
+        showLoading(true, "儲存中...");
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ type: "CONFIG", teams: teams }) });
-        alert("名單儲存完成！");
-        fetchData();
+        alert("儲存成功！"); fetchData();
     }
 
     async function saveAtt(idx, date) {
@@ -175,12 +180,9 @@
             const el = document.getElementById('s-'+m.name);
             if(el) att[m.name] = el.value;
         });
-        showLoading(true, "正在儲存點名...");
-        try {
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ teamName: t.name, date: date, attendance: att }) });
-            alert("點名儲存成功！");
-            fetchData();
-        } catch(e) { alert("儲存失敗"); showLoading(false); }
+        showLoading(true, "儲存中...");
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ teamName: t.name, date: date, attendance: att }) });
+        alert("點名儲存成功！"); fetchData();
     }
 
     function showLoading(s, t="") { 
