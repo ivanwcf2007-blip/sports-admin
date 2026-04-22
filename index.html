@@ -6,99 +6,120 @@
     <title>梨木樹天主教小學 - 校隊管理系統</title>
     <style>
         :root { --blue: #1e3a8a; --light-blue: #3b82f6; --orange: #f97316; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background-color: #f8fafc; height: 100vh; display: flex; flex-direction: column; }
+        body { font-family: -apple-system, sans-serif; margin: 0; background-color: #f8fafc; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* 頁首與導航 */
-        .header { background: var(--blue); color: white; padding: 12px; text-align: center; font-weight: bold; position: relative; z-index: 1001; display: flex; justify-content: space-between; align-items: center; }
-        .menu-toggle { display: block; background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 0 10px; }
+        /* 頁首 */
+        .header { background: var(--blue); color: white; padding: 12px 15px; text-align: center; font-weight: bold; position: relative; z-index: 2000; display: flex; align-items: center; justify-content: space-between; height: 50px; box-sizing: border-box; }
+        .menu-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 0 5px; }
         
         .wrapper { display: flex; flex: 1; overflow: hidden; position: relative; }
         
-        /* 側邊欄：手機版預設隱藏，電腦版顯示 */
+        /* 側邊欄適配 */
         .sidebar { 
-            width: 240px; background: white; border-right: 1px solid #ddd; overflow-y: auto; 
-            transition: transform 0.3s ease; position: absolute; height: 100%; z-index: 1000;
+            width: 250px; background: white; border-right: 1px solid #ddd; overflow-y: auto; 
+            transition: transform 0.3s ease; position: absolute; height: 100%; z-index: 1500;
         }
-        .sidebar.closed { transform: translateX(-100%); }
+        .sidebar.mobile-hidden { transform: translateX(-100%); }
         
-        .main { flex: 1; padding: 15px; overflow-y: auto; width: 100%; box-sizing: border-box; }
+        /* 主畫面 */
+        .main { flex: 1; padding: 15px; overflow-y: auto; width: 100%; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
 
-        /* 電腦版適配 */
         @media (min-width: 768px) {
-            .menu-toggle { display: none; }
+            .menu-btn { display: none; }
             .sidebar { position: relative; transform: none !important; }
-            .main { padding: 25px; }
+            .sidebar.mobile-hidden { transform: none; }
         }
 
-        /* 導航項目 */
-        .nav-item { padding: 15px 20px; border-bottom: 1px solid #eee; cursor: pointer; color: #333; }
-        .active { background: #eff6ff !important; color: var(--blue) !important; font-weight: bold; border-left: 5px solid var(--blue); }
+        /* 選單樣式 */
+        .nav-item { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; cursor: pointer; color: #333; font-size: 16px; }
+        .nav-item.active { background: #eff6ff !important; color: var(--blue) !important; font-weight: bold; border-left: 4px solid var(--blue); }
         
-        /* 卡片與表格 */
-        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 15px; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; background: white; font-size: 14px; }
-        th { background: #f1f5f9; padding: 10px 5px; text-align: left; }
-        td { border-bottom: 1px solid #eee; padding: 10px 5px; }
+        /* 表格與按鈕 */
+        .card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; }
+        th { background: #f8fafc; padding: 10px 5px; text-align: left; color: #64748b; font-size: 13px; border-bottom: 2px solid #edf2f7; }
+        td { padding: 12px 5px; border-bottom: 1px solid #f1f5f9; }
         
-        /* 按鈕優化 */
-        .btn { padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; display: inline-block; }
+        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
         .btn-primary { background: var(--blue); color: white; }
-        .btn-excel { background: var(--orange); color: white; margin-bottom: 10px; }
+        .btn-excel { background: var(--orange); color: white; margin-bottom: 10px; width: 100%; }
         
-        select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; background: white; width: 100%; }
+        select { padding: 10px; border-radius: 8px; border: 1px solid #cbd5e0; font-size: 15px; width: 100%; appearance: none; background: white; }
 
         /* 管理中心摺疊 */
-        .config-card { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; background: white; }
-        .card-header { padding: 15px; cursor: pointer; display: flex; justify-content: space-between; font-weight: bold; }
-        .card-content { padding: 15px; display: none; border-top: 1px solid #eee; background: #fafafa; }
+        .config-card { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; background: white; overflow: hidden; }
+        .card-header { padding: 15px; cursor: pointer; display: flex; justify-content: space-between; background: #fff; align-items: center; }
+        .card-content { padding: 15px; display: none; border-top: 1px solid #edf2f7; background: #f8fafc; }
         .open .card-content { display: block; }
-        textarea { width: 100%; height: 200px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 5px; }
+        textarea { width: 100%; height: 220px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: monospace; line-height: 1.5; }
 
-        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; justify-content:center; align-items:center; flex-direction:column; }
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999; }
+        #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:3000; justify-content:center; align-items:center; flex-direction:column; text-align:center; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1400; }
         .overlay.show { display: block; }
     </style>
 </head>
 <body>
 
-<div id="loader">⚙️ 處理中...</div>
+<div id="loader">
+    <div style="font-size: 30px; margin-bottom: 15px;">🔄</div>
+    <div id="loader-text">正在讀取雲端資料...</div>
+    <button onclick="location.reload()" style="margin-top: 20px; padding: 8px 15px;">重新載入</button>
+</div>
+
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
 <div class="header">
-    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-    <div>LMSCCPS 校隊管理</div>
-    <div style="width:40px;"></div> </div>
+    <button class="menu-btn" onclick="toggleMenu()">☰</button>
+    <span>LMSCCPS 校隊點名</span>
+    <div style="width: 30px;"></div>
+</div>
 
 <div class="wrapper">
-    <div class="sidebar closed" id="sidebar">
-        <div class="nav-item active" id="nav-cfg" onclick="showManager(); toggleMenu();">⚙️ 校隊與名單管理</div>
-        <div style="padding:15px 20px; font-size:12px; background:#f8fafc; color:#94a3b8; font-weight:bold;">點名區域</div>
+    <div class="sidebar mobile-hidden" id="sidebar">
+        <div class="nav-item active" id="nav-cfg" onclick="showManager(); closeMenuOnMobile();">⚙️ 校隊名單管理</div>
+        <div style="padding:15px 20px; font-size:12px; font-weight:bold; color:#94a3b8; background:#f8fafc;">校隊點名區域</div>
         <div id="team-menu"></div>
     </div>
     
-    <div class="main" id="display-area"></div>
+    <div class="main" id="display-area">
+        <div style="text-align: center; color: #64748b; margin-top: 50px;">請點擊左上角 ☰ 選取校隊</div>
+    </div>
 </div>
 
 <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzj_nokXo1TygqWbOv3Agg8UNcY9pJASjUUoe4dBGekMSXNnD10zdiyjMJDuVx0b9KE/exec"; // 請確保這是最新部署網址
+    // ⚠️ 確保這裡是您從 Google 取得的最新網址
+    const API_URL = "https://script.google.com/macros/s/AKfycbzj_nokXo1TygqWbOv3Agg8UNcY9pJASjUUoe4dBGekMSXNnD10zdiyjMJDuVx0b9KE/exec"; 
+
     let teams = []; let cloudAtt = [];
 
     async function init() {
-        showLoader(true);
+        toggleLoader(true, "連線中...");
         try {
             const resp = await fetch(API_URL);
+            if (!resp.ok) throw new Error("網路連線不穩定");
             const data = await resp.json();
             teams = data.teams || [];
             cloudAtt = data.attendance || [];
             renderSidebar();
             showManager();
-        } catch(e) { alert("同步失敗，請檢查 API 網址"); }
-        showLoader(false);
+        } catch(e) {
+            document.getElementById('loader-text').innerHTML = "<span style='color:red;'>連線失敗</span><br>請確認 Google 部署權限為「所有人」";
+            console.error(e);
+        } finally {
+            toggleLoader(false);
+        }
     }
 
     function toggleMenu() {
-        document.getElementById('sidebar').classList.toggle('closed');
+        document.getElementById('sidebar').classList.toggle('mobile-hidden');
         document.getElementById('overlay').classList.toggle('show');
+    }
+
+    function closeMenuOnMobile() {
+        if (window.innerWidth < 768) {
+            document.getElementById('sidebar').classList.add('mobile-hidden');
+            document.getElementById('overlay').classList.remove('show');
+        }
     }
 
     function renderSidebar() {
@@ -107,8 +128,13 @@
         teams.forEach((t, i) => {
             const div = document.createElement('div');
             div.className = 'nav-item';
-            div.innerText = "🏐 " + t.name;
-            div.onclick = () => { renderDates(i); toggleMenu(); };
+            div.innerHTML = "🏐 " + (t.name || "未命名");
+            div.onclick = () => {
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                div.classList.add('active');
+                renderDates(i);
+                closeMenuOnMobile();
+            };
             menu.appendChild(div);
         });
     }
@@ -116,22 +142,28 @@
     function showManager() {
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.getElementById('nav-cfg').classList.add('active');
+        
         let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="margin:0;">設定中心</h3>
-            <button class="btn btn-primary" onclick="saveConfig()">💾 儲存</button>
+            <button class="btn btn-primary" onclick="saveConfig()">💾 儲存並同步</button>
         </div>
-        <button class="btn" style="background:#eee; width:100%; margin-bottom:15px;" onclick="addTeam()">+ 新增校隊</button>`;
+        <button class="btn" style="background:#edf2f7; width:100%; margin-bottom:15px; color:#4a5568;" onclick="addTeam()">+ 新增校隊</button>`;
+        
+        if (teams.length === 0) html += `<div class="card">目前尚無校隊，請按上方按鈕新增。</div>`;
         
         teams.forEach((t, i) => {
+            const memberText = (t.members || []).map(m => `${m.class || '?'} ${m.no || '?'} ${m.name || '?'}`).join('\n');
             html += `<div class="config-card" id="card-${i}">
                 <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
-                    ${t.name} <span style="color:#999; font-size:12px;">${t.members.length}人 ▾</span>
+                    <strong>${t.name || '未命名'}</strong>
+                    <span style="color:#94a3b8; font-size:12px;">${(t.members || []).length} 人 ▾</span>
                 </div>
                 <div class="card-content">
-                    隊名: <input type="text" value="${t.name}" onchange="teams[${i}].name=this.value" style="width:100%; padding:8px; margin:5px 0;"><br>
-                    練習日 (0=日, 1=一): <input type="text" value="${t.days.join(',')}" onchange="teams[${i}].days=this.value.split(',').map(Number)" style="width:100%; padding:8px; margin:5px 0;"><br>
-                    名單:<br><textarea onchange="updateMembers(${i}, this.value)">${t.members.map(m => `${m.class} ${m.no} ${m.name}`).join('\n')}</textarea>
-                    <button class="btn" style="color:red; background:none; width:100%;" onclick="if(confirm('刪除？')){teams.splice(${i},1);showManager();}">🗑️ 刪除此隊</button>
+                    <label style="font-size:12px; color:#718096;">校隊名稱</label>
+                    <input type="text" value="${t.name}" onchange="teams[${i}].name=this.value" style="width:100%; padding:10px; margin:5px 0 15px 0; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+                    <label style="font-size:12px; color:#718096;">名單 (班別 學號 姓名)</label>
+                    <textarea onchange="updateMembers(${i}, this.value)">${memberText}</textarea>
+                    <button class="btn" style="color:#e53e3e; background:none; width:100%; margin-top:10px;" onclick="if(confirm('確定刪除？')){teams.splice(${i},1);showManager();}">🗑️ 刪除此校隊</button>
                 </div>
             </div>`;
         });
@@ -145,7 +177,4 @@
         });
     }
 
-    function addTeam() { teams.unshift({name: "新校隊", days: [1], members: []}); showManager(); }
-
-    async function saveConfig() {
-        showLoader(true
+    function addTeam() { teams.unshift({name: "新校隊",
