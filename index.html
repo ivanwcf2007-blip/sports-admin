@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <script>
-        // 1. ⚠️ 請在此填入您的 Google API 網址 ⚠️
+        // 1. ⚠️ 請務必在此填入您的 Google API 網址 ⚠️
         const API_URL = "https://script.google.com/macros/s/AKfycbwd2rTacfH8o9NF2XMhhgqRe1PqxjEaprsn8S6YBQDYCna040JZEmGYHwtgnc2U0uXQ/exec"; 
     </script>
 
@@ -27,7 +27,7 @@
         .card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; text-align: left; }
-        .btn { padding: 12px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .btn { padding: 12px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
         .btn-blue { background: var(--blue); color: white; }
         .export-box { background: #fffbeb; border: 1px solid #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
         .btn-orange { background: var(--orange); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -38,7 +38,7 @@
 </head>
 <body>
 
-<div id="loading"><div id="loadingText">🔄 正在同步資料...</div></div>
+<div id="loading"><div id="loadingText">🔄 同步雲端資料...</div></div>
 
 <header>
     <button class="menu-toggle" onclick="toggleSidebar()">☰ 選單</button>
@@ -60,7 +60,7 @@
 
     window.onload = () => {
         if (!API_URL.startsWith("https")) {
-            document.getElementById('main-content').innerHTML = `<div class="card"><h3>⚠️ 未填寫 API</h3><p>請在代碼第 5 行填入網址。</p></div>`;
+            document.getElementById('main-content').innerHTML = `<div class="card"><h3>⚠️ 未填寫 API 網址</h3><p>請在代碼第 5 行貼上部署網址並儲存。</p></div>`;
             return;
         }
         fetchData();
@@ -76,7 +76,7 @@
             renderSidebar();
             showSection('config');
         } catch (e) {
-            alert("讀取失敗，請檢查網路或 Google 權限。");
+            alert("連線失敗！請確保 Google Script 設為「所有人」。");
         }
         showLoading(false);
     }
@@ -110,9 +110,9 @@
             teams.forEach((t, i) => {
                 h += `<div class="card">
                     隊名: <input type="text" value="${t.name}" onchange="teams[${i}].name=this.value" style="width:100%; padding:8px; margin:5px 0;"><br>
-                    練習日(0=日,1=一...): <input type="text" value="${t.days.join(',')}" onchange="teams[${i}].days=this.value.split(',').map(Number)" style="width:100%; padding:8px; margin:5px 0;"><br>
+                    練習日(0=日...): <input type="text" value="${t.days.join(',')}" onchange="teams[${i}].days=this.value.split(',').map(Number)" style="width:100%; padding:8px; margin:5px 0;"><br>
                     名單:<br><textarea onchange="updateMembers(${i}, this.value)">${t.members.map(m => `${m.class} ${m.no} ${m.name}`).join('\n')}</textarea>
-                    <button onclick="if(confirm('確定刪除？')){teams.splice(${i},1);showSection('config')}" style="color:red; background:none; border:none; margin-top:10px;">🗑️ 刪除</button>
+                    <button onclick="if(confirm('刪除？')){teams.splice(${i},1);showSection('config')}" style="color:red; background:none; border:none; margin-top:10px; cursor:pointer;">🗑️ 刪除</button>
                 </div>`;
             });
             main.innerHTML = h;
@@ -137,8 +137,7 @@
 
     function renderRoll(idx, date) {
         const t = teams[idx];
-        // 關鍵修正：確保比對時格式一致
-        const record = attendance.find(r => r.teamName.trim() === t.name.trim() && r.date === date);
+        const record = attendance.find(r => r.teamName.trim() === t.name.trim() && (r.date === date || r.date === date.replace(/-/g, '/')));
         const attData = record ? record.attendance : {};
         
         let h = `<h3>${t.name} - ${date}</h3>
@@ -161,14 +160,12 @@
 
     async function saveAtt(idx, date) {
         const t = teams[idx]; const att = {};
-        t.members.forEach(m => {
-            att[m.name] = document.getElementById('s-'+m.name).value;
-        });
-        showLoading(true, "儲存點名中...");
+        t.members.forEach(m => { att[m.name] = document.getElementById('s-'+m.name).value; });
+        showLoading(true, "儲存中...");
         try {
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ teamName: t.name, date: date, attendance: att }) });
             alert("點名完成！");
-            await fetchData(); // 重新抓取資料確保同步
+            await fetchData(); 
         } catch(e) { alert("儲存失敗"); }
         showLoading(false);
     }
@@ -190,11 +187,10 @@
         t.members.forEach(m => {
             csv += `${m.class},${m.no},${m.name}`;
             dates.forEach(d => {
-                const rec = attendance.find(r => r.teamName.trim() === t.name.trim() && r.date === d);
+                const slashDate = d.replace(/-/g, '/');
+                const rec = attendance.find(r => r.teamName.trim() === t.name.trim() && (r.date === d || r.date === slashDate));
                 let status = "-";
-                if(rec && rec.attendance && rec.attendance[m.name]) {
-                    status = rec.attendance[m.name];
-                }
+                if(rec && rec.attendance && rec.attendance[m.name]) status = rec.attendance[m.name];
                 csv += "," + status;
             });
             csv += "\n";
@@ -218,7 +214,7 @@
     async function saveConfig() {
         showLoading(true, "儲存中...");
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ type: "CONFIG", teams: teams }) });
-        alert("儲存成功！"); fetchData();
+        alert("儲存完成！"); fetchData();
     }
 
     function showLoading(s, t="") { 
