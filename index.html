@@ -6,73 +6,99 @@
     <title>梨木樹天主教小學 - 校隊管理系統</title>
     <style>
         :root { --blue: #1e3a8a; --light-blue: #3b82f6; --orange: #f97316; }
-        body { font-family: sans-serif; margin: 0; background-color: #f8fafc; height: 100vh; display: flex; flex-direction: column; 
-            background-image: linear-gradient(rgba(248,250,252,0.95), rgba(248,250,252,0.95)), url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNDAwIj48ZyBvcGFjaXR5PSIwLjA4Ij48cGF0aCBkPSJNMjAwIDQwIEwzNDAgMTIwIEwzNDAgMjgwIEwyMDAgMzYwIEw2MCAyODAgTDYwIDEyMCBaIiBmaWxsPSJub25lIiBzdHJva2U9IiMxZTMhOGEiIHN0cm9rZS13aWR0aD0iNCIvPjx0ZXh0IHg9IjIwMCIgeT0iMjEwIiBmb250LXNpemU9IjMwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMWUzYThhIj5MTVNDQ1BTPC90ZXh0PjwvZz48L3N2Zz4=");
-            background-repeat: no-repeat; background-position: center; background-size: 400px;
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background-color: #f8fafc; height: 100vh; display: flex; flex-direction: column; }
+        
+        /* 頁首與導航 */
+        .header { background: var(--blue); color: white; padding: 12px; text-align: center; font-weight: bold; position: relative; z-index: 1001; display: flex; justify-content: space-between; align-items: center; }
+        .menu-toggle { display: block; background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 0 10px; }
+        
+        .wrapper { display: flex; flex: 1; overflow: hidden; position: relative; }
+        
+        /* 側邊欄：手機版預設隱藏，電腦版顯示 */
+        .sidebar { 
+            width: 240px; background: white; border-right: 1px solid #ddd; overflow-y: auto; 
+            transition: transform 0.3s ease; position: absolute; height: 100%; z-index: 1000;
         }
-        .header { background: var(--blue); color: white; padding: 12px; text-align: center; font-weight: bold; }
-        .wrapper { display: flex; flex: 1; overflow: hidden; }
-        .sidebar { width: 240px; background: white; border-right: 1px solid #ddd; overflow-y: auto; }
-        .main { flex: 1; padding: 20px; overflow-y: auto; }
-        .nav-item { padding: 12px 20px; border-bottom: 1px solid #eee; cursor: pointer; }
-        .active { background: #eff6ff !important; color: var(--blue) !important; font-weight: bold; border-left: 4px solid var(--blue); }
-        .config-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; }
-        .card-header { padding: 15px; cursor: pointer; background: #fff; display: flex; justify-content: space-between; }
+        .sidebar.closed { transform: translateX(-100%); }
+        
+        .main { flex: 1; padding: 15px; overflow-y: auto; width: 100%; box-sizing: border-box; }
+
+        /* 電腦版適配 */
+        @media (min-width: 768px) {
+            .menu-toggle { display: none; }
+            .sidebar { position: relative; transform: none !important; }
+            .main { padding: 25px; }
+        }
+
+        /* 導航項目 */
+        .nav-item { padding: 15px 20px; border-bottom: 1px solid #eee; cursor: pointer; color: #333; }
+        .active { background: #eff6ff !important; color: var(--blue) !important; font-weight: bold; border-left: 5px solid var(--blue); }
+        
+        /* 卡片與表格 */
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 15px; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 14px; }
+        th { background: #f1f5f9; padding: 10px 5px; text-align: left; }
+        td { border-bottom: 1px solid #eee; padding: 10px 5px; }
+        
+        /* 按鈕優化 */
+        .btn { padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; display: inline-block; }
+        .btn-primary { background: var(--blue); color: white; }
+        .btn-excel { background: var(--orange); color: white; margin-bottom: 10px; }
+        
+        select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; background: white; width: 100%; }
+
+        /* 管理中心摺疊 */
+        .config-card { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; background: white; }
+        .card-header { padding: 15px; cursor: pointer; display: flex; justify-content: space-between; font-weight: bold; }
         .card-content { padding: 15px; display: none; border-top: 1px solid #eee; background: #fafafa; }
         .open .card-content { display: block; }
-        .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
-        .btn-primary { background: var(--blue); color: white; }
-        .btn-excel { background: var(--orange); color: white; float: right; }
-        textarea { width: 100%; height: 200px; padding: 10px; box-sizing: border-box; font-family: monospace; }
+        textarea { width: 100%; height: 200px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 5px; }
+
         #loader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; justify-content:center; align-items:center; flex-direction:column; }
-        .date-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; margin-top: 20px; }
-        .date-btn { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-        th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999; }
+        .overlay.show { display: block; }
     </style>
 </head>
 <body>
 
-<div id="loader">
-    <div style="font-size: 24px; margin-bottom: 10px;">⚙️</div>
-    <div>正在與 Google Excel 同步中...</div>
-    <button onclick="location.reload()" style="margin-top: 20px;">停止並重試</button>
-</div>
+<div id="loader">⚙️ 處理中...</div>
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
-<div class="header">梨木樹天主教小學 - 校隊管理系統</div>
+<div class="header">
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <div>LMSCCPS 校隊管理</div>
+    <div style="width:40px;"></div> </div>
 
 <div class="wrapper">
-    <div class="sidebar">
-        <div class="nav-item active" id="nav-cfg" onclick="showManager()">⚙️ 校隊與名單管理</div>
-        <div style="padding:10px 20px; font-size:12px; background:#f8fafc; color:#666;">點名區域</div>
+    <div class="sidebar closed" id="sidebar">
+        <div class="nav-item active" id="nav-cfg" onclick="showManager(); toggleMenu();">⚙️ 校隊與名單管理</div>
+        <div style="padding:15px 20px; font-size:12px; background:#f8fafc; color:#94a3b8; font-weight:bold;">點名區域</div>
         <div id="team-menu"></div>
     </div>
+    
     <div class="main" id="display-area"></div>
 </div>
 
 <script>
-    // ⚠️ 請務必在此貼上您「最新部署」的 API 網址
-    const API_URL = "https://script.google.com/macros/s/AKfycbzj_nokXo1TygqWbOv3Agg8UNcY9pJASjUUoe4dBGekMSXNnD10zdiyjMJDuVx0b9KE/exec"; 
-
+    const API_URL = "https://script.google.com/macros/s/AKfycbzj_nokXo1TygqWbOv3Agg8UNcY9pJASjUUoe4dBGekMSXNnD10zdiyjMJDuVx0b9KE/exec"; // 請確保這是最新部署網址
     let teams = []; let cloudAtt = [];
 
     async function init() {
         showLoader(true);
         try {
-            // 加入 10 秒超時機制
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), 10000);
-            const resp = await fetch(API_URL, { signal: controller.signal });
+            const resp = await fetch(API_URL);
             const data = await resp.json();
             teams = data.teams || [];
             cloudAtt = data.attendance || [];
             renderSidebar();
             showManager();
-        } catch(e) {
-            alert("同步失敗！請檢查：1. API網址是否正確 2. Google部署是否設為「所有人」");
-            console.error(e);
-        }
+        } catch(e) { alert("同步失敗，請檢查 API 網址"); }
         showLoader(false);
+    }
+
+    function toggleMenu() {
+        document.getElementById('sidebar').classList.toggle('closed');
+        document.getElementById('overlay').classList.toggle('show');
     }
 
     function renderSidebar() {
@@ -82,7 +108,7 @@
             const div = document.createElement('div');
             div.className = 'nav-item';
             div.innerText = "🏐 " + t.name;
-            div.onclick = () => renderDates(i);
+            div.onclick = () => { renderDates(i); toggleMenu(); };
             menu.appendChild(div);
         });
     }
@@ -90,22 +116,22 @@
     function showManager() {
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.getElementById('nav-cfg').classList.add('active');
-        let html = `<div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-            <h3 style="margin:0;">校隊設定中心</h3>
-            <div>
-                <button class="btn" style="background:#ddd" onclick="addTeam()">+ 新增校隊</button>
-                <button class="btn btn-primary" onclick="saveConfig()">💾 儲存至雲端</button>
-            </div>
-        </div>`;
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0;">設定中心</h3>
+            <button class="btn btn-primary" onclick="saveConfig()">💾 儲存</button>
+        </div>
+        <button class="btn" style="background:#eee; width:100%; margin-bottom:15px;" onclick="addTeam()">+ 新增校隊</button>`;
+        
         teams.forEach((t, i) => {
             html += `<div class="config-card" id="card-${i}">
                 <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
-                    <strong>${t.name}</strong> <span>${t.members.length} 人 ▾</span>
+                    ${t.name} <span style="color:#999; font-size:12px;">${t.members.length}人 ▾</span>
                 </div>
                 <div class="card-content">
-                    隊名: <input type="text" value="${t.name}" onchange="teams[${i}].name=this.value"><br><br>
-                    練習日(0-6): <input type="text" value="${t.days.join(',')}" onchange="teams[${i}].days=this.value.split(',').map(Number)"><br><br>
+                    隊名: <input type="text" value="${t.name}" onchange="teams[${i}].name=this.value" style="width:100%; padding:8px; margin:5px 0;"><br>
+                    練習日 (0=日, 1=一): <input type="text" value="${t.days.join(',')}" onchange="teams[${i}].days=this.value.split(',').map(Number)" style="width:100%; padding:8px; margin:5px 0;"><br>
                     名單:<br><textarea onchange="updateMembers(${i}, this.value)">${t.members.map(m => `${m.class} ${m.no} ${m.name}`).join('\n')}</textarea>
+                    <button class="btn" style="color:red; background:none; width:100%;" onclick="if(confirm('刪除？')){teams.splice(${i},1);showManager();}">🗑️ 刪除此隊</button>
                 </div>
             </div>`;
         });
@@ -122,74 +148,4 @@
     function addTeam() { teams.unshift({name: "新校隊", days: [1], members: []}); showManager(); }
 
     async function saveConfig() {
-        showLoader(true);
-        try {
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ type: "CONFIG", teams: teams }) });
-            alert("儲存成功！");
-            init();
-        } catch(e) { alert("儲存失敗，請檢查網路連線"); }
-        showLoader(false);
-    }
-
-    function renderDates(idx) {
-        const t = teams[idx];
-        let html = `<div><button class="btn btn-excel" onclick="exportFull(${idx})">📊 匯出總表</button><h2>${t.name}</h2></div><div class="date-grid">`;
-        let curr = new Date('2026-04-01');
-        while(curr <= new Date('2026-06-30')) {
-            if(t.days.includes(curr.getDay())) {
-                const d = curr.toISOString().split('T')[0];
-                html += `<div class="date-btn" onclick="renderRoll(${idx},'${d}')">${d.substring(5)}</div>`;
-            }
-            curr.setDate(curr.getDate()+1);
-        }
-        document.getElementById('display-area').innerHTML = html + "</div>";
-    }
-
-    function renderRoll(idx, date) {
-        const t = teams[idx];
-        const record = cloudAtt.find(r => r.teamName === t.name && r.date === date);
-        const att = record ? record.attendance : {};
-        let html = `<h3>${t.name} (${date})</h3><button class="btn btn-primary" onclick="saveAtt(${idx},'${date}')">💾 儲存點名</button><table>`;
-        t.members.forEach(m => {
-            const s = att[m.name] || "出席";
-            html += `<tr><td>${m.class}</td><td>${m.no}</td><td>${m.name}</td><td>
-                <select id="s-${m.name}"><option ${s=='出席'?'selected':''}>出席</option><option ${s=='請假'?'selected':''}>請假</option><option ${s=='遲到'?'selected':''}>遲到</option><option ${s=='缺席'?'selected':''}>缺席</option></select>
-            </td></tr>`;
-        });
-        document.getElementById('display-area').innerHTML = html + "</table>";
-    }
-
-    async function saveAtt(idx, date) {
-        const t = teams[idx]; const att = {};
-        t.members.forEach(m => att[m.name] = document.getElementById('s-'+m.name).value);
-        showLoader(true);
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ teamName: t.name, date: date, attendance: att }) });
-        alert("點名完成！");
-        init();
-    }
-
-    function exportFull(idx) {
-        const t = teams[idx]; let csv = "\uFEFF班別,學號,姓名"; let dates = [];
-        let curr = new Date('2026-04-01');
-        while(curr <= new Date('2026-06-30')) {
-            if(t.days.includes(curr.getDay())) { const d = curr.toISOString().split('T')[0]; dates.push(d); csv += "," + d; }
-            curr.setDate(curr.getDate() + 1);
-        }
-        csv += "\n";
-        t.members.forEach(m => {
-            csv += `${m.class},${m.no},${m.name}`;
-            dates.forEach(d => {
-                const r = cloudAtt.find(rec => rec.teamName === t.name && rec.date === d);
-                csv += "," + (r ? r.attendance[m.name] : "-");
-            });
-            csv += "\n";
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${t.name}_出席表.csv`; a.click();
-    }
-
-    function showLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
-    window.onload = init;
-</script>
-</body>
-</html>
+        showLoader(true
