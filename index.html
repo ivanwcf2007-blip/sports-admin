@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <script>
-        // 1. ⚠️ 請務必在此填入您的 Google API 網址 ⚠️
+        // 1. ⚠️ 請在此填入您的 Google API 網址 ⚠️
         const API_URL = "https://script.google.com/macros/s/AKfycbwd2rTacfH8o9NF2XMhhgqRe1PqxjEaprsn8S6YBQDYCna040JZEmGYHwtgnc2U0uXQ/exec"; 
     </script>
 
@@ -10,13 +10,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LMSCCPS 校隊點名系統</title>
     <style>
-        :root { --blue: #1e3a8a; --light: #f8fafc; --border: #e2e8f0; --orange: #f97316; }
+        :root { --blue: #1e3a8a; --light: #f8fafc; --border: #e2e8f0; --orange: #f59e0b; }
         body { font-family: system-ui, -apple-system, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: var(--light); color: #1e293b; overflow: hidden; }
         header { background: var(--blue); color: white; padding: 15px; display: flex; align-items: center; z-index: 2000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 60px; box-sizing: border-box; }
-        .menu-toggle { background: #3b82f6; border: none; color: white; padding: 8px 12px; border-radius: 4px; margin-right: 15px; cursor: pointer; display: none; font-size: 16px; }
+        .menu-toggle { background: #3b82f6; border: none; color: white; padding: 8px 12px; border-radius: 4px; margin-right: 15px; cursor: pointer; display: none; }
         .container { display: flex; flex: 1; overflow: hidden; position: relative; }
         aside { width: 260px; background: white; border-right: 1px solid var(--border); overflow-y: auto; transition: 0.3s; z-index: 1500; }
-        .nav-item { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 16px; }
+        .nav-item { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
         .nav-item.active { background: #eff6ff; color: var(--blue); font-weight: bold; border-left: 4px solid var(--blue); }
         main { flex: 1; padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         @media (max-width: 991px) {
@@ -25,23 +25,24 @@
             aside.open { left: 0; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
         }
         .card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; background: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; text-align: left; }
-        .btn { padding: 12px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+        .btn { padding: 12px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; }
         .btn-blue { background: var(--blue); color: white; }
-        .btn-orange { background: var(--orange); color: white; width: 100%; margin-bottom: 15px; display: block; text-align: center; text-decoration: none; }
+        .export-box { background: #fffbeb; border: 1px solid #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .btn-orange { background: var(--orange); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         textarea { width: 100%; height: 200px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
-        select { padding: 10px; border-radius: 4px; border: 1px solid #ccc; width: 100%; font-size: 16px; background: white; }
+        select { padding: 10px; border-radius: 4px; border: 1px solid #ccc; width: 100%; background: white; font-size: 16px; }
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; justify-content: center; align-items: center; z-index: 9999; flex-direction: column; }
     </style>
 </head>
 <body>
 
-<div id="loading"><div id="loadingText">🔄 正在載入...</div></div>
+<div id="loading"><div id="loadingText">🔄 正在同步資料...</div></div>
 
 <header>
     <button class="menu-toggle" onclick="toggleSidebar()">☰ 選單</button>
-    <strong>LMSCCPS 校隊點名</strong>
+    <strong>LMSCCPS 校隊點名系統</strong>
 </header>
 
 <div class="container">
@@ -50,10 +51,7 @@
         <div style="padding:15px 20px; font-size:12px; color:#94a3b8; font-weight:bold; background:#f8fafc;">校隊點名列表</div>
         <div id="team-list"></div>
     </aside>
-
-    <main id="main-content">
-        <div style="padding:50px; text-align:center; color:#94a3b8;">正在連接資料庫...</div>
-    </main>
+    <main id="main-content"></main>
 </div>
 
 <script>
@@ -62,7 +60,7 @@
 
     window.onload = () => {
         if (!API_URL.startsWith("https")) {
-            document.getElementById('main-content').innerHTML = `<h3>⚠️ 網址未填寫</h3><p>請在第 5 行填入 API 網址</p>`;
+            document.getElementById('main-content').innerHTML = `<div class="card"><h3>⚠️ 未填寫 API</h3><p>請在代碼第 5 行填入網址。</p></div>`;
             return;
         }
         fetchData();
@@ -78,7 +76,7 @@
             renderSidebar();
             showSection('config');
         } catch (e) {
-            alert("連線失敗！請確認 Google Script 部署權限為「所有人」。");
+            alert("讀取失敗，請檢查網路或 Google 權限。");
         }
         showLoading(false);
     }
@@ -112,16 +110,18 @@
             teams.forEach((t, i) => {
                 h += `<div class="card">
                     隊名: <input type="text" value="${t.name}" onchange="teams[${i}].name=this.value" style="width:100%; padding:8px; margin:5px 0;"><br>
-                    練習日 (0=日, 1=一...): <input type="text" value="${t.days.join(',')}" onchange="teams[${i}].days=this.value.split(',').map(Number)" style="width:100%; padding:8px; margin:5px 0;"><br>
+                    練習日(0=日,1=一...): <input type="text" value="${t.days.join(',')}" onchange="teams[${i}].days=this.value.split(',').map(Number)" style="width:100%; padding:8px; margin:5px 0;"><br>
                     名單:<br><textarea onchange="updateMembers(${i}, this.value)">${t.members.map(m => `${m.class} ${m.no} ${m.name}`).join('\n')}</textarea>
-                    <button onclick="if(confirm('確定刪除？')){teams.splice(${i},1);showSection('config')}" style="color:red; background:none; border:none; margin-top:10px; cursor:pointer;">🗑️ 刪除此隊</button>
+                    <button onclick="if(confirm('確定刪除？')){teams.splice(${i},1);showSection('config')}" style="color:red; background:none; border:none; margin-top:10px;">🗑️ 刪除</button>
                 </div>`;
             });
             main.innerHTML = h;
         } else {
             const t = teams[index];
             let h = `<h2>${t.name}</h2>
-                     <button class="btn btn-orange" onclick="exportExcel(${index})">📊 匯出總出席表 (CSV)</button>
+                     <div class="export-box">
+                        <button class="btn-orange" onclick="exportExcel(${index})">📊 點此匯出出席總表 (CSV)</button>
+                     </div>
                      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap:10px;">`;
             let curr = new Date('2026-04-01');
             while(curr <= new Date('2026-06-30')) {
@@ -137,38 +137,26 @@
 
     function renderRoll(idx, date) {
         const t = teams[idx];
-        const record = attendance.find(r => r.teamName === t.name && r.date === date);
+        // 關鍵修正：確保比對時格式一致
+        const record = attendance.find(r => r.teamName.trim() === t.name.trim() && r.date === date);
         const attData = record ? record.attendance : {};
+        
         let h = `<h3>${t.name} - ${date}</h3>
                  <button class="btn btn-blue" onclick="saveAtt(${idx},'${date}')">💾 儲存今日點名</button>
-                 <button class="btn" style="margin-left:10px;" onclick="showSection('team',${idx})">返回日期</button>
-                 <table style="margin-top:15px;"><tr><th>學生</th><th>狀態</th></tr>`;
+                 <button class="btn" style="margin-left:10px;" onclick="showSection('team',${idx})">返回</button>
+                 <table><tr><th>學生</th><th>狀態</th></tr>`;
+        
         t.members.forEach(m => {
             const s = attData[m.name] || "出席";
             h += `<tr><td>${m.class}-${m.no} ${m.name}</td>
                   <td><select id="s-${m.name}">
-                    <option ${s=='出席'?'selected':''}>出席</option>
-                    <option ${s=='請假'?'selected':''}>請假</option>
-                    <option ${s=='遲到'?'selected':''}>遲到</option>
-                    <option ${s=='缺席'?'selected':''}>缺席</option>
+                    <option value="出席" ${s==='出席'?'selected':''}>出席</option>
+                    <option value="請假" ${s==='請假'?'selected':''}>請假</option>
+                    <option value="遲到" ${s==='遲到'?'selected':''}>遲到</option>
+                    <option value="缺席" ${s==='缺席'?'selected':''}>缺席</option>
                   </select></td></tr>`;
         });
         document.getElementById('main-content').innerHTML = h + "</table>";
-    }
-
-    function updateMembers(idx, val) {
-        teams[idx].members = val.split('\n').filter(l => l.trim()).map(line => {
-            const p = line.replace(/[()\-?]/g, ' ').replace(/\s+/g, ' ').trim().split(' ');
-            return { class: p[0] || '?', no: p[1] || '?', name: p[2] || '?' };
-        });
-    }
-
-    function addTeam() { teams.unshift({name: "新校隊", days: [1,3,5], members: []}); showSection('config'); }
-
-    async function saveConfig() {
-        showLoading(true, "正在儲存名單...");
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ type: "CONFIG", teams: teams }) });
-        alert("儲存完成！"); fetchData();
     }
 
     async function saveAtt(idx, date) {
@@ -177,8 +165,12 @@
             att[m.name] = document.getElementById('s-'+m.name).value;
         });
         showLoading(true, "儲存點名中...");
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ teamName: t.name, date: date, attendance: att }) });
-        alert("點名紀錄已儲存！"); fetchData();
+        try {
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ teamName: t.name, date: date, attendance: att }) });
+            alert("點名完成！");
+            await fetchData(); // 重新抓取資料確保同步
+        } catch(e) { alert("儲存失敗"); }
+        showLoading(false);
     }
 
     function exportExcel(idx) {
@@ -198,16 +190,35 @@
         t.members.forEach(m => {
             csv += `${m.class},${m.no},${m.name}`;
             dates.forEach(d => {
-                const rec = attendance.find(r => r.teamName === t.name && r.date === d);
-                csv += "," + (rec ? rec.attendance[m.name] : "-");
+                const rec = attendance.find(r => r.teamName.trim() === t.name.trim() && r.date === d);
+                let status = "-";
+                if(rec && rec.attendance && rec.attendance[m.name]) {
+                    status = rec.attendance[m.name];
+                }
+                csv += "," + status;
             });
             csv += "\n";
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `${t.name}_出席總表.csv`;
+        link.download = `${t.name}_點名總表.csv`;
         link.click();
+    }
+
+    function updateMembers(idx, val) {
+        teams[idx].members = val.split('\n').filter(l => l.trim()).map(line => {
+            const p = line.replace(/[()\-?]/g, ' ').replace(/\s+/g, ' ').trim().split(' ');
+            return { class: p[0] || '?', no: p[1] || '?', name: p[2] || '?' };
+        });
+    }
+
+    function addTeam() { teams.unshift({name: "新校隊", days: [1,3,5], members: []}); showSection('config'); }
+
+    async function saveConfig() {
+        showLoading(true, "儲存中...");
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ type: "CONFIG", teams: teams }) });
+        alert("儲存成功！"); fetchData();
     }
 
     function showLoading(s, t="") { 
