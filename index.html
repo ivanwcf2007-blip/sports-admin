@@ -2,8 +2,8 @@
 <html lang="zh-Hant">
 <head>
     <script>
-        // 1. ⚠️ 請務必在此填入您的 Google API 網址 ⚠️
-        const API_URL = "https://script.google.com/macros/s/AKfycbwd2rTacfH8o9NF2XMhhgqRe1PqxjEaprsn8S6YBQDYCna040JZEmGYHwtgnc2U0uXQ/exec"; 
+        // 1. ⚠️ 請務必在此填入您「重新部署」後的最新網址 ⚠️
+        const API_URL = "https://script.google.com/macros/s/AKfycbyA8LJMTZjNnbTlxRZEp-hsYSBJX3sCPFQY0-slxNvj8fXMNrcDYcWX--PSg9H9tXVu/exec"; 
     </script>
 
     <meta charset="UTF-8">
@@ -60,7 +60,7 @@
 
     window.onload = () => {
         if (!API_URL.startsWith("https")) {
-            document.getElementById('main-content').innerHTML = `<div class="card"><h3>⚠️ 未填寫 API 網址</h3><p>請在代碼第 5 行貼上部署網址並儲存。</p></div>`;
+            document.getElementById('main-content').innerHTML = `<div class="card"><h3>⚠️ 未填寫 API 網址</h3><p>請在代碼第 5 行填入 Google Script 部署網址。</p></div>`;
             return;
         }
         fetchData();
@@ -72,11 +72,15 @@
             const res = await fetch(API_URL);
             const data = await res.json();
             teams = data.teams || [];
-            attendance = data.attendance || [];
+            // 統一日期格式為 YYYY-MM-DD 方便比對
+            attendance = (data.attendance || []).map(r => ({
+                ...r,
+                date: r.date.includes('/') ? r.date.split('/').reverse().join('-') : r.date 
+            }));
             renderSidebar();
             showSection('config');
         } catch (e) {
-            alert("連線失敗！請確保 Google Script 設為「所有人」。");
+            alert("讀取失敗，請確認網址正確且權限為「所有人」。");
         }
         showLoading(false);
     }
@@ -110,9 +114,9 @@
             teams.forEach((t, i) => {
                 h += `<div class="card">
                     隊名: <input type="text" value="${t.name}" onchange="teams[${i}].name=this.value" style="width:100%; padding:8px; margin:5px 0;"><br>
-                    練習日(0=日...): <input type="text" value="${t.days.join(',')}" onchange="teams[${i}].days=this.value.split(',').map(Number)" style="width:100%; padding:8px; margin:5px 0;"><br>
+                    練習日(0=日, 1=一...): <input type="text" value="${t.days.join(',')}" onchange="teams[${i}].days=this.value.split(',').map(Number)" style="width:100%; padding:8px; margin:5px 0;"><br>
                     名單:<br><textarea onchange="updateMembers(${i}, this.value)">${t.members.map(m => `${m.class} ${m.no} ${m.name}`).join('\n')}</textarea>
-                    <button onclick="if(confirm('刪除？')){teams.splice(${i},1);showSection('config')}" style="color:red; background:none; border:none; margin-top:10px; cursor:pointer;">🗑️ 刪除</button>
+                    <button onclick="if(confirm('確定刪除？')){teams.splice(${i},1);showSection('config')}" style="color:red; background:none; border:none; margin-top:10px;">🗑️ 刪除</button>
                 </div>`;
             });
             main.innerHTML = h;
@@ -137,12 +141,12 @@
 
     function renderRoll(idx, date) {
         const t = teams[idx];
-        const record = attendance.find(r => r.teamName.trim() === t.name.trim() && (r.date === date || r.date === date.replace(/-/g, '/')));
+        const record = attendance.find(r => r.teamName.trim() === t.name.trim() && r.date === date);
         const attData = record ? record.attendance : {};
         
         let h = `<h3>${t.name} - ${date}</h3>
                  <button class="btn btn-blue" onclick="saveAtt(${idx},'${date}')">💾 儲存今日點名</button>
-                 <button class="btn" style="margin-left:10px;" onclick="showSection('team',${idx})">返回</button>
+                 <button class="btn" style="margin-left:10px;" onclick="showSection('team',${idx})">返回日期</button>
                  <table><tr><th>學生</th><th>狀態</th></tr>`;
         
         t.members.forEach(m => {
@@ -161,12 +165,12 @@
     async function saveAtt(idx, date) {
         const t = teams[idx]; const att = {};
         t.members.forEach(m => { att[m.name] = document.getElementById('s-'+m.name).value; });
-        showLoading(true, "儲存中...");
+        showLoading(true, "儲存點名紀錄...");
         try {
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ teamName: t.name, date: date, attendance: att }) });
-            alert("點名完成！");
+            alert("點名成功！");
             await fetchData(); 
-        } catch(e) { alert("儲存失敗"); }
+        } catch(e) { alert("儲存失敗，請重試。"); }
         showLoading(false);
     }
 
@@ -187,8 +191,7 @@
         t.members.forEach(m => {
             csv += `${m.class},${m.no},${m.name}`;
             dates.forEach(d => {
-                const slashDate = d.replace(/-/g, '/');
-                const rec = attendance.find(r => r.teamName.trim() === t.name.trim() && (r.date === d || r.date === slashDate));
+                const rec = attendance.find(r => r.teamName.trim() === t.name.trim() && r.date === d);
                 let status = "-";
                 if(rec && rec.attendance && rec.attendance[m.name]) status = rec.attendance[m.name];
                 csv += "," + status;
@@ -212,9 +215,9 @@
     function addTeam() { teams.unshift({name: "新校隊", days: [1,3,5], members: []}); showSection('config'); }
 
     async function saveConfig() {
-        showLoading(true, "儲存中...");
+        showLoading(true, "儲存名單設定...");
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ type: "CONFIG", teams: teams }) });
-        alert("儲存完成！"); fetchData();
+        alert("名單儲存成功！"); fetchData();
     }
 
     function showLoading(s, t="") { 
